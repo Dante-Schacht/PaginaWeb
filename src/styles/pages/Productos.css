@@ -1,0 +1,130 @@
+/* Productos Page Styles */
+.productos-page {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.page-header {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.page-subtitle {
+  font-size: 1.1rem;
+  color: #666;
+  margin: 0;
+}
+
+/* Filters Sidebar */
+.filters-sidebar {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 2rem;
+}
+
+.filters-title {
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #9C2007;
+}
+
+.filter-group {
+  margin-bottom: 1.5rem;
+}
+
+.filter-group:last-child {
+  margin-bottom: 0;
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.category-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.category-filter-btn {
+  text-align: left;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.category-filter-btn:hover {
+  transform: translateX(5px);
+}
+
+/* Products Section */
+.products-section {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.products-header {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 1rem;
+}
+
+.products-count {
+  color: #333;
+  font-weight: 600;
+  margin: 0;
+}
+
+.selected-category-badge {
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+}
+
+.no-products {
+  padding: 3rem 1rem;
+}
+
+.no-products i {
+  margin-bottom: 1rem;
+}
+
+.no-products h4 {
+  margin-bottom: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .filters-sidebar {
+    position: static;
+    margin-bottom: 2rem;
+  }
+  
+  .category-filters {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .category-filter-btn {
+    flex: 1;
+    min-width: calc(50% - 0.25rem);
+  }
+}

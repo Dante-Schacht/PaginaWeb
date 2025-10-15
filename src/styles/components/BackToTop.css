@@ -1,0 +1,58 @@
+/* Back to Top Button */
+.back-to-top-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #9C2007 0%, #701705 100%);
+  color: white;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 15px rgba(156, 32, 7, 0.3);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInUp 0.3s ease;
+}
+
+.back-to-top-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(156, 32, 7, 0.4);
+  background: linear-gradient(135deg, #701705 0%, #440E03 100%);
+  color: white;
+}
+
+.back-to-top-btn:focus {
+  box-shadow: 0 0 0 3px rgba(156, 32, 7, 0.3);
+  color: white;
+}
+
+.back-to-top-btn:active {
+  transform: translateY(-1px);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .back-to-top-btn {
+    bottom: 20px;
+    right: 20px;
+    width: 45px;
+    height: 45px;
+    font-size: 1rem;
+  }
+}

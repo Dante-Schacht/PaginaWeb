@@ -1,0 +1,39 @@
+/* Loading Spinner Styles */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  padding: 2rem;
+}
+
+.loading-content {
+  text-align: center;
+}
+
+.loading-spinner {
+  color: #9C2007;
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.3rem;
+}
+
+.loading-text {
+  margin-top: 1rem;
+  color: #666;
+  font-weight: 500;
+  margin-bottom: 0;
+}
+
+/* Size variants */
+.loading-spinner[data-size="sm"] {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-width: 0.2rem;
+}
+
+.loading-spinner[data-size="lg"] {
+  width: 4rem;
+  height: 4rem;
+  border-width: 0.4rem;
+}
