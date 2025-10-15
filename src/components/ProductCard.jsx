@@ -1,10 +1,12 @@
 import React from 'react';
-import { Card, Button, Badge } from 'react-bootstrap';
+import { Card, Button, Badge, Spinner } from 'react-bootstrap';
 import { useApp } from '../context/AppContext';
+import useImageLoader from '../hooks/useImageLoader';
 import '../styles/components/ProductCard.css';
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useApp();
+  const { imageSrc, isLoading } = useImageLoader(product.image);
 
   const handleAddToCart = () => {
     addToCart(product);
@@ -22,12 +24,19 @@ const ProductCard = ({ product }) => {
   return (
     <Card className="product-card h-100">
       <div className="product-image-container">
-        <Card.Img 
-          variant="top" 
-          src={product.image || '/placeholder-product.jpg'} 
-          alt={product.name}
-          className="product-image"
-        />
+        {isLoading ? (
+          <div className="product-image-loading d-flex align-items-center justify-content-center">
+            <Spinner animation="border" size="sm" />
+          </div>
+        ) : (
+          <Card.Img 
+            variant="top" 
+            src={imageSrc} 
+            alt={product.name}
+            className="product-image"
+            loading="lazy"
+          />
+        )}
         {product.discount && (
           <Badge bg="danger" className="discount-badge">
             -{product.discount}%

@@ -1,5 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import xanoAPI from '../config/xano';
+import { 
+  mapProduct, 
+  mapCategory, 
+  mapUser, 
+  extractCategoriesFromProducts,
+  mapLoginResponse,
+  mapRegisterResponse,
+  mapError
+} from '../utils/dataAdapter';
 
 // Hook para manejar el estado de carga y errores
 export const useXanoState = () => {
@@ -318,3 +327,128 @@ export const useContact = () => {
 
   return { sendMessage, loading, error };
 };
+
+// Hook principal que combina todas las funcionalidades
+const useXano = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleRequest = async (requestFn) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const result = await requestFn();
+      return result;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    loading,
+    error,
+    handleRequest,
+    // Métodos de productos (con mapeo)
+    getProducts: async (params) => {
+      try {
+        const data = await handleRequest(() => xanoAPI.getProducts(params));
+        return Array.isArray(data) ? data.map(mapProduct) : [];
+      } catch (error) {
+        throw new Error(mapError(error));
+      }
+    },
+    getProductById: async (id) => {
+      try {
+        const data = await handleRequest(() => xanoAPI.getProductById(id));
+        return mapProduct(data);
+      } catch (error) {
+        throw new Error(mapError(error));
+      }
+    },
+    getProductsByCategory: async (category, params) => {
+      try {
+        const data = await handleRequest(() => xanoAPI.getProductsByCategory(category, params));
+        return Array.isArray(data) ? data.map(mapProduct) : [];
+      } catch (error) {
+        throw new Error(mapError(error));
+      }
+    },
+    searchProducts: async (query, params) => {
+      try {
+        const data = await handleRequest(() => xanoAPI.searchProducts(query, params));
+        return Array.isArray(data) ? data.map(mapProduct) : [];
+      } catch (error) {
+        throw new Error(mapError(error));
+      }
+    },
+    
+    // Métodos de categorías (extraer de productos)
+    getCategories: async () => {
+      try {
+        const products = await handleRequest(() => xanoAPI.getProducts());
+        return extractCategoriesFromProducts(Array.isArray(products) ? products : []);
+      } catch (error) {
+        throw new Error(mapError(error));
+      }
+    },
+    
+    // Métodos de autenticación (con mapeo)
+    login: async (email, password) => {
+      try {
+        const data = await handleRequest(() => xanoAPI.login(email, password));
+        return mapLoginResponse(data);
+      } catch (error) {
+        throw new Error(mapError(error));
+      }
+    },
+    register: async (userData) => {
+      try {
+        const data = await handleRequest(() => xanoAPI.register(userData));
+        return mapRegisterResponse(data);
+      } catch (error) {
+        throw new Error(mapError(error));
+      }
+    },
+    logout: (token) => handleRequest(() => xanoAPI.logout(token)),
+    getProfile: async (token) => {
+      try {
+        const data = await handleRequest(() => xanoAPI.getProfile(token));
+        return mapUser(data);
+      } catch (error) {
+        throw new Error(mapError(error));
+      }
+    },
+    updateProfile: (token, userData) => handleRequest(() => xanoAPI.updateProfile(token, userData)),
+    changePassword: (token, currentPassword, newPassword) => handleRequest(() => xanoAPI.changePassword(token, currentPassword, newPassword)),
+    forgotPassword: (email) => handleRequest(() => xanoAPI.forgotPassword(email)),
+    resetPassword: (token, password) => handleRequest(() => xanoAPI.resetPassword(token, password)),
+    verifyEmail: (token) => handleRequest(() => xanoAPI.verifyEmail(token)),
+    refreshToken: (refreshToken) => handleRequest(() => xanoAPI.refreshToken(refreshToken)),
+    
+    // Métodos de carrito
+    getCart: (userId) => handleRequest(() => xanoAPI.getCart(userId)),
+    addToCart: (productId, quantity, userId) => handleRequest(() => xanoAPI.addToCart(productId, quantity, userId)),
+    removeFromCart: (productId, userId) => handleRequest(() => xanoAPI.removeFromCart(productId, userId)),
+    updateCart: (productId, quantity, userId) => handleRequest(() => xanoAPI.updateCart(productId, quantity, userId)),
+    
+    // Métodos de órdenes
+    createOrder: (orderData) => handleRequest(() => xanoAPI.createOrder(orderData)),
+    getOrderById: (id) => handleRequest(() => xanoAPI.getOrderById(id)),
+    getUserOrders: (userId) => handleRequest(() => xanoAPI.getUserOrders(userId)),
+    
+    // Métodos de contacto
+    sendContactMessage: (messageData) => handleRequest(() => xanoAPI.sendContactMessage(messageData)),
+    
+    // Métodos de blogs
+    getBlogs: (params) => handleRequest(() => xanoAPI.getBlogs(params)),
+    getBlogById: (id) => handleRequest(() => xanoAPI.getBlogById(id)),
+    getFeaturedBlogs: () => handleRequest(() => xanoAPI.getFeaturedBlogs())
+  };
+};
+
+// Exportación por defecto
+export default useXano;

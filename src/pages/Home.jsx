@@ -4,6 +4,9 @@ import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import ProductCard from '../components/ProductCard';
 import LoadingSpinner from '../components/LoadingSpinner';
+import UserWelcome from '../components/UserWelcome';
+import XanoTest from '../components/XanoTest';
+import XanoAuthTest from '../components/XanoAuthTest';
 import '../styles/pages/Home.css';
 
 const Home = () => {
@@ -11,57 +14,59 @@ const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
 
   useEffect(() => {
-    // Simular carga de productos destacados
-    setLoading(true);
-    setTimeout(() => {
-      const mockProducts = [
-        {
-          id: 1,
-          name: 'Logitech G Pro X Superlight',
-          price: 149990,
-          originalPrice: 179990,
-          image: '/ImagenHome.png',
-          category: 'Mouses',
-          description: 'Mouse gaming ultra ligero de 63g con sensor HERO 25K y 70 horas de batería',
-          rating: 4.9,
-          reviews: 2847,
-          discount: 17,
-          isNew: false,
-          brand: 'Logitech'
-        },
-        {
-          id: 2,
-          name: 'Razer Huntsman Mini',
-          price: 99990,
-          originalPrice: 119990,
-          image: '/ImagenHome.png',
-          category: 'Teclados',
-          description: 'Teclado mecánico compacto 60% con switches Razer Clicky y retroiluminación RGB',
-          rating: 4.7,
-          reviews: 1923,
-          discount: 17,
-          isNew: false,
-          brand: 'Razer'
-        },
-        {
-          id: 3,
-          name: 'Sony WH-1000XM5',
-          price: 399990,
-          originalPrice: 449990,
-          image: '/ImagenHome.png',
-          category: 'Audífonos',
-          description: 'Audífonos inalámbricos con cancelación de ruido líder en la industria',
-          rating: 4.8,
-          reviews: 3456,
-          discount: 11,
-          isNew: true,
-          brand: 'Sony'
-        }
-      ];
-      setFeaturedProducts(mockProducts);
-      setLoading(false);
-    }, 1000);
-  }, [setLoading]);
+    // Solo cargar productos destacados si no están cargados
+    if (featuredProducts.length === 0) {
+      setLoading(true);
+      setTimeout(() => {
+        const mockProducts = [
+          {
+            id: 1,
+            name: 'Logitech G Pro X Superlight',
+            price: 149990,
+            originalPrice: 179990,
+            image: '/ImagenHome.png',
+            category: 'Mouses',
+            description: 'Mouse gaming ultra ligero de 63g con sensor HERO 25K y 70 horas de batería',
+            rating: 4.9,
+            reviews: 2847,
+            discount: 17,
+            isNew: false,
+            brand: 'Logitech'
+          },
+          {
+            id: 2,
+            name: 'Razer Huntsman Mini',
+            price: 99990,
+            originalPrice: 119990,
+            image: '/ImagenHome.png',
+            category: 'Teclados',
+            description: 'Teclado mecánico compacto 60% con switches Razer Clicky y retroiluminación RGB',
+            rating: 4.7,
+            reviews: 1923,
+            discount: 17,
+            isNew: false,
+            brand: 'Razer'
+          },
+          {
+            id: 3,
+            name: 'Sony WH-1000XM5',
+            price: 399990,
+            originalPrice: 449990,
+            image: '/ImagenHome.png',
+            category: 'Audífonos',
+            description: 'Audífonos inalámbricos con cancelación de ruido líder en la industria',
+            rating: 4.8,
+            reviews: 3456,
+            discount: 11,
+            isNew: true,
+            brand: 'Sony'
+          }
+        ];
+        setFeaturedProducts(mockProducts);
+        setLoading(false);
+      }, 1000);
+    }
+  }, [featuredProducts.length, setLoading]);
 
   const categories = [
     { name: 'Mouses', icon: 'bi-mouse', link: '/productos?categoria=mouses', color: '#9C2007' },
@@ -74,6 +79,9 @@ const Home = () => {
 
   return (
     <div className="home-page">
+      {/* User Welcome Message */}
+      <UserWelcome />
+      
       {/* Hero Section */}
       <section className="hero-section">
         {/* Transition gradient */}
@@ -228,6 +236,22 @@ const Home = () => {
           </Row>
         </Container>
       </section>
+
+      {/* Componente de prueba de Xano - Solo en desarrollo */}
+      {import.meta.env.DEV && (
+        <>
+          <section className="py-5 bg-light">
+            <Container>
+              <XanoTest />
+            </Container>
+          </section>
+          <section className="py-5">
+            <Container>
+              <XanoAuthTest />
+            </Container>
+          </section>
+        </>
+      )}
     </div>
   );
 };

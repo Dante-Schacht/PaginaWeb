@@ -1,18 +1,21 @@
 // Xano API Configuration
 const XANO_CONFIG = {
   // Base URL de tu API de Xano
-  BASE_URL: process.env.REACT_APP_XANO_BASE_URL || 'https://your-workspace.xano.io/api:your-api-group',
+  BASE_URL: import.meta.env.VITE_API_URL || 'https://x8ki-letl-twmt.n7.xano.io/api:SzMZfFwX',
+  
+  // Auth URL separada para autenticación
+  AUTH_URL: import.meta.env.VITE_AUTH_URL || 'https://x8ki-letl-twmt.n7.xano.io/api:QbleTY9C',
   
   // Endpoints
   ENDPOINTS: {
     // Productos
-    PRODUCTS: '/products',
-    PRODUCT_BY_ID: (id) => `/products/${id}`,
-    PRODUCTS_BY_CATEGORY: (category) => `/products?category=${category}`,
-    SEARCH_PRODUCTS: (query) => `/products/search?q=${query}`,
+    PRODUCTS: '/product',
+    PRODUCT_BY_ID: (id) => `/product/${id}`,
+    PRODUCTS_BY_CATEGORY: (category) => `/product?category=${category}`,
+    SEARCH_PRODUCTS: (query) => `/product/search?q=${query}`,
     
-    // Categorías
-    CATEGORIES: '/categories',
+    // Categorías (usar endpoint de productos para obtener categorías)
+    CATEGORIES: '/product/categories',
     
     // Carrito (si usas Xano para manejar carritos)
     CART: '/cart',
@@ -20,11 +23,19 @@ const XANO_CONFIG = {
     REMOVE_FROM_CART: '/cart/remove',
     UPDATE_CART: '/cart/update',
     
-    // Usuarios
-    USERS: '/users',
+    // Usuarios y Autenticación (ajustados a tus endpoints de Xano)
+    USERS: '/user',
     LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
-    PROFILE: '/auth/profile',
+    REGISTER: '/auth/signup',
+    PROFILE: '/auth/me',
+    // Endpoints adicionales que puedes agregar después
+    LOGOUT: '/auth/logout',
+    REFRESH_TOKEN: '/auth/refresh',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
+    VERIFY_EMAIL: '/auth/verify-email',
+    UPDATE_PROFILE: '/auth/update-profile',
+    CHANGE_PASSWORD: '/auth/change-password',
     
     // Órdenes
     ORDERS: '/orders',
@@ -62,6 +73,7 @@ class XanoAPI {
   constructor(config = XANO_CONFIG) {
     this.config = config;
     this.baseURL = config.BASE_URL;
+    this.authURL = config.AUTH_URL;
   }
 
   // Método para hacer requests HTTP
@@ -84,6 +96,30 @@ class XanoAPI {
       return data;
     } catch (error) {
       console.error('Xano API Error:', error);
+      throw error;
+    }
+  }
+
+  // Método para hacer requests de autenticación
+  async authRequest(endpoint, options = {}) {
+    const url = `${this.authURL}${endpoint}`;
+    const defaultOptions = {
+      headers: this.config.DEFAULT_HEADERS,
+      timeout: this.config.TIMEOUT,
+      ...options
+    };
+
+    try {
+      const response = await fetch(url, defaultOptions);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Xano Auth API Error:', error);
       throw error;
     }
   }
@@ -163,25 +199,88 @@ class XanoAPI {
 
   // Métodos para autenticación
   async login(email, password) {
-    return this.request(this.config.ENDPOINTS.LOGIN, {
+    return this.authRequest(this.config.ENDPOINTS.LOGIN, {
       method: 'POST',
       body: JSON.stringify({ email, password })
     });
   }
 
   async register(userData) {
-    return this.request(this.config.ENDPOINTS.REGISTER, {
+    return this.authRequest(this.config.ENDPOINTS.REGISTER, {
       method: 'POST',
       body: JSON.stringify(userData)
     });
   }
 
-  async getProfile(token) {
-    return this.request(this.config.ENDPOINTS.PROFILE, {
+  async logout(token) {
+    return this.authRequest(this.config.ENDPOINTS.LOGOUT, {
+      method: 'POST',
       headers: {
         ...this.config.DEFAULT_HEADERS,
         'Authorization': `Bearer ${token}`
       }
+    });
+  }
+
+  async getProfile(token) {
+    return this.authRequest(this.config.ENDPOINTS.PROFILE, {
+      headers: {
+        ...this.config.DEFAULT_HEADERS,
+        'Authorization': `Bearer ${token}`
+      }
+    });
+  }
+
+  async updateProfile(token, userData) {
+    return this.authRequest(this.config.ENDPOINTS.UPDATE_PROFILE, {
+      method: 'PUT',
+      headers: {
+        ...this.config.DEFAULT_HEADERS,
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(userData)
+    });
+  }
+
+  async changePassword(token, currentPassword, newPassword) {
+    return this.authRequest(this.config.ENDPOINTS.CHANGE_PASSWORD, {
+      method: 'POST',
+      headers: {
+        ...this.config.DEFAULT_HEADERS,
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        current_password: currentPassword,
+        new_password: newPassword
+      })
+    });
+  }
+
+  async forgotPassword(email) {
+    return this.authRequest(this.config.ENDPOINTS.FORGOT_PASSWORD, {
+      method: 'POST',
+      body: JSON.stringify({ email })
+    });
+  }
+
+  async resetPassword(token, password) {
+    return this.authRequest(this.config.ENDPOINTS.RESET_PASSWORD, {
+      method: 'POST',
+      body: JSON.stringify({ token, password })
+    });
+  }
+
+  async verifyEmail(token) {
+    return this.authRequest(this.config.ENDPOINTS.VERIFY_EMAIL, {
+      method: 'POST',
+      body: JSON.stringify({ token })
+    });
+  }
+
+  async refreshToken(refreshToken) {
+    return this.authRequest(this.config.ENDPOINTS.REFRESH_TOKEN, {
+      method: 'POST',
+      body: JSON.stringify({ refresh_token: refreshToken })
     });
   }
 

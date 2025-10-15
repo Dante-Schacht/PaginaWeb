@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Navbar, Nav, Container, Badge, Offcanvas } from 'react-bootstrap';
+import { Navbar, Nav, Container, Badge, Offcanvas, Dropdown } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import Logo from './Logo';
@@ -7,8 +7,13 @@ import '../styles/components/Header.css';
 
 const Header = () => {
   const [show, setShow] = useState(false);
-  const { cartItemsCount } = useApp();
+  const { cartItemsCount, user, logout, isAdmin } = useApp();
   const location = useLocation();
+  
+  // Debug logs temporales
+  console.log('🔍 Header - User state:', user);
+  console.log('🔍 Header - isAdmin():', isAdmin());
+  console.log('🔍 Header - user?.role:', user?.role);
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
@@ -67,6 +72,7 @@ const Header = () => {
             </Nav>
             
             <Nav>
+              {/* Carrito */}
               <Nav.Link 
                 onClick={handleShow}
                 className="cart-link"
@@ -78,6 +84,45 @@ const Header = () => {
                   </Badge>
                 )}
               </Nav.Link>
+              
+              {/* Autenticación */}
+              {user ? (
+                <Dropdown align="end">
+                  <Dropdown.Toggle as={Nav.Link} className="user-dropdown">
+                    <i className="bi bi-person-circle me-1"></i>
+                    {user.name}
+                  </Dropdown.Toggle>
+                  <Dropdown.Menu>
+                    <Dropdown.Item as={Link} to="/profile">
+                      <i className="bi bi-person me-2"></i>
+                      Mi Perfil
+                    </Dropdown.Item>
+                    <Dropdown.Item as={Link} to="/orders">
+                      <i className="bi bi-bag me-2"></i>
+                      Mis Pedidos
+                    </Dropdown.Item>
+                    {isAdmin() && (
+                      <>
+                        <Dropdown.Divider />
+                        <Dropdown.Item as={Link} to="/admin" className="admin-link">
+                          <i className="bi bi-gear me-2"></i>
+                          Panel de Administración
+                        </Dropdown.Item>
+                      </>
+                    )}
+                    <Dropdown.Divider />
+                    <Dropdown.Item onClick={logout}>
+                      <i className="bi bi-box-arrow-right me-2"></i>
+                      Cerrar Sesión
+                    </Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown>
+              ) : (
+                <Nav.Link as={Link} to="/login" className="auth-link">
+                  <i className="bi bi-person me-1"></i>
+                  Iniciar Sesión
+                </Nav.Link>
+              )}
             </Nav>
           </Navbar.Collapse>
         </Container>

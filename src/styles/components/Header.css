@@ -83,6 +83,78 @@
   font-weight: 600;
 }
 
+/* User Dropdown Styles */
+.user-dropdown {
+  color: white !important;
+  text-decoration: none;
+  font-weight: 500;
+  transition: var(--transition);
+  border: none !important;
+  background: none !important;
+}
+
+.user-dropdown:hover {
+  color: #f8f9fa !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.user-dropdown:focus {
+  color: white !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none !important;
+}
+
+.user-dropdown::after {
+  display: none;
+}
+
+/* Auth Link Styles */
+.auth-link {
+  color: white !important;
+  text-decoration: none;
+  font-weight: 500;
+  transition: var(--transition);
+  border-radius: 0.375rem;
+  padding: 0.5rem 1rem !important;
+}
+
+.auth-link:hover {
+  color: #f8f9fa !important;
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Dropdown Menu Styles */
+.dropdown-menu {
+  border: none;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-medium);
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
+}
+
+.dropdown-item {
+  padding: 0.5rem 1rem;
+  color: var(--text-dark);
+  transition: var(--transition);
+  font-weight: 500;
+}
+
+.dropdown-item:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.dropdown-item:focus {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.dropdown-divider {
+  margin: 0.5rem 0;
+  border-color: #e9ecef;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .brand-text {
@@ -98,4 +170,32 @@
     text-align: center;
     margin-top: 0.5rem;
   }
+  
+  .auth-link {
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+  
+  .user-dropdown {
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+}
+
+/* Admin Link Styles */
+.admin-link {
+  color: var(--primary-color) !important;
+  font-weight: 600;
+  background: linear-gradient(135deg, #9C2007 0%, #701705 100%);
+  color: white !important;
+  margin: 0.25rem;
+  border-radius: 0.5rem;
+  transition: var(--transition);
+}
+
+.admin-link:hover {
+  background: linear-gradient(135deg, #701705 0%, #440E03 100%);
+  color: white !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(156, 32, 7, 0.3);
 }

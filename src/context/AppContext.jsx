@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react';
+import authService from '../services/authService';
 
 // Estado inicial
 const initialState = {
@@ -29,7 +30,10 @@ const ACTIONS = {
   REMOVE_FROM_CART: 'REMOVE_FROM_CART',
   UPDATE_CART_QUANTITY: 'UPDATE_CART_QUANTITY',
   CLEAR_CART: 'CLEAR_CART',
-  SET_USER: 'SET_USER'
+  SET_USER: 'SET_USER',
+  LOGIN: 'LOGIN',
+  LOGOUT: 'LOGOUT',
+  REGISTER: 'REGISTER'
 };
 
 // Reducer
@@ -83,6 +87,16 @@ const appReducer = (state, action) => {
     case ACTIONS.SET_USER:
       return { ...state, user: action.payload };
     
+    case ACTIONS.LOGIN:
+      console.log('🔍 Reducer - LOGIN action dispatched with payload:', action.payload);
+      return { ...state, user: action.payload, loading: false };
+    
+    case ACTIONS.LOGOUT:
+      return { ...state, user: null, cart: [] };
+    
+    case ACTIONS.REGISTER:
+      return { ...state, user: action.payload, loading: false };
+    
     default:
       return state;
   }
@@ -95,39 +109,178 @@ const AppContext = createContext();
 export const AppProvider = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
-  // Funciones para manejar el carrito
-  const addToCart = (product) => {
+  // Funciones para manejar el carrito (usando useCallback)
+  const addToCart = useCallback((product) => {
     dispatch({ type: ACTIONS.ADD_TO_CART, payload: product });
-  };
+  }, []);
 
-  const removeFromCart = (productId) => {
+  const removeFromCart = useCallback((productId) => {
     dispatch({ type: ACTIONS.REMOVE_FROM_CART, payload: productId });
-  };
+  }, []);
 
-  const updateCartQuantity = (productId, quantity) => {
+  const updateCartQuantity = useCallback((productId, quantity) => {
     dispatch({ type: ACTIONS.UPDATE_CART_QUANTITY, payload: { id: productId, quantity } });
-  };
+  }, []);
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     dispatch({ type: ACTIONS.CLEAR_CART });
-  };
+  }, []);
 
-  // Funciones para productos
-  const setProducts = (products) => {
+  // Funciones para productos (usando useCallback para evitar recreación)
+  const setProducts = useCallback((products) => {
     dispatch({ type: ACTIONS.SET_PRODUCTS, payload: products });
-  };
+  }, []);
 
-  const setLoading = (loading) => {
+  const setLoading = useCallback((loading) => {
     dispatch({ type: ACTIONS.SET_LOADING, payload: loading });
-  };
+  }, []);
 
-  const setError = (error) => {
+  const setError = useCallback((error) => {
     dispatch({ type: ACTIONS.SET_ERROR, payload: error });
-  };
+  }, []);
 
-  // Calcular total del carrito
-  const cartTotal = state.cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-  const cartItemsCount = state.cart.reduce((count, item) => count + item.quantity, 0);
+  // Funciones de autenticación con Xano (usando useCallback)
+  const login = useCallback(async (email, password) => {
+    try {
+      dispatch({ type: ACTIONS.SET_LOADING, payload: true });
+      
+      const result = await authService.login(email, password);
+      console.log('🔍 AppContext - Login result:', result);
+      
+      if (result.success) {
+        console.log('🔍 AppContext - Dispatching LOGIN with user:', result.user);
+        dispatch({ type: ACTIONS.LOGIN, payload: result.user });
+        return { success: true };
+      } else {
+        dispatch({ type: ACTIONS.SET_ERROR, payload: result.error });
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      const errorMessage = 'Error de conexión. Intenta nuevamente.';
+      dispatch({ type: ACTIONS.SET_ERROR, payload: errorMessage });
+      return { success: false, error: errorMessage };
+    }
+  }, []);
+
+  const register = useCallback(async (name, email, password) => {
+    try {
+      dispatch({ type: ACTIONS.SET_LOADING, payload: true });
+      
+      const userData = {
+        first_name: name.split(' ')[0],
+        last_name: name.split(' ').slice(1).join(' ') || '',
+        email: email,
+        password: password,
+        role: 'user' // Rol por defecto
+      };
+      
+      const result = await authService.register(userData);
+      
+      if (result.success) {
+        dispatch({ type: ACTIONS.REGISTER, payload: result.user });
+        return { success: true };
+      } else {
+        dispatch({ type: ACTIONS.SET_ERROR, payload: result.error });
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      const errorMessage = 'Error de conexión. Intenta nuevamente.';
+      dispatch({ type: ACTIONS.SET_ERROR, payload: errorMessage });
+      return { success: false, error: errorMessage };
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      dispatch({ type: ACTIONS.LOGOUT });
+    }
+  }, []);
+
+  // Funciones adicionales de autenticación
+  const updateProfile = useCallback(async (userData) => {
+    try {
+      dispatch({ type: ACTIONS.SET_LOADING, payload: true });
+      
+      const result = await authService.updateProfile(userData);
+      
+      if (result.success) {
+        dispatch({ type: ACTIONS.SET_USER, payload: result.user });
+        return { success: true, user: result.user };
+      } else {
+        dispatch({ type: ACTIONS.SET_ERROR, payload: result.error });
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      const errorMessage = 'Error al actualizar perfil';
+      dispatch({ type: ACTIONS.SET_ERROR, payload: errorMessage });
+      return { success: false, error: errorMessage };
+    }
+  }, []);
+
+  const changePassword = useCallback(async (currentPassword, newPassword) => {
+    try {
+      dispatch({ type: ACTIONS.SET_LOADING, payload: true });
+      
+      const result = await authService.changePassword(currentPassword, newPassword);
+      
+      if (result.success) {
+        return { success: true, message: result.message };
+      } else {
+        dispatch({ type: ACTIONS.SET_ERROR, payload: result.error });
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      const errorMessage = 'Error al cambiar contraseña';
+      dispatch({ type: ACTIONS.SET_ERROR, payload: errorMessage });
+      return { success: false, error: errorMessage };
+    }
+  }, []);
+
+  const forgotPassword = useCallback(async (email) => {
+    try {
+      dispatch({ type: ACTIONS.SET_LOADING, payload: true });
+      
+      const result = await authService.forgotPassword(email);
+      
+      if (result.success) {
+        return { success: true, message: result.message };
+      } else {
+        dispatch({ type: ACTIONS.SET_ERROR, payload: result.error });
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      const errorMessage = 'Error al enviar email de recuperación';
+      dispatch({ type: ACTIONS.SET_ERROR, payload: errorMessage });
+      return { success: false, error: errorMessage };
+    }
+  }, []);
+
+  // Verificar roles
+  const hasRole = useCallback((role) => {
+    return authService.hasRole(role);
+  }, []);
+
+  const isAdmin = useCallback(() => {
+    return authService.isAdmin();
+  }, []);
+
+  const isVendedor = useCallback(() => {
+    return authService.isVendedor();
+  }, []);
+
+  // Calcular total del carrito usando useMemo
+  const cartTotal = useMemo(() => {
+    return state.cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  }, [state.cart]);
+
+  const cartItemsCount = useMemo(() => {
+    return state.cart.reduce((count, item) => count + item.quantity, 0);
+  }, [state.cart]);
 
   // Cargar datos del localStorage al inicializar
   useEffect(() => {
@@ -142,14 +295,22 @@ export const AppProvider = ({ children }) => {
         console.error('Error loading cart from localStorage:', error);
       }
     }
-  }, []);
+
+    // Cargar usuario del servicio de autenticación
+    if (authService.isAuthenticated()) {
+      const user = authService.getUser();
+      if (user) {
+        dispatch({ type: ACTIONS.SET_USER, payload: user });
+      }
+    }
+  }, []); // Dependencias vacías para que solo se ejecute una vez
 
   // Guardar carrito en localStorage cuando cambie
   useEffect(() => {
     localStorage.setItem('electroverse-cart', JSON.stringify(state.cart));
   }, [state.cart]);
 
-  const value = {
+  const value = useMemo(() => ({
     ...state,
     addToCart,
     removeFromCart,
@@ -158,9 +319,38 @@ export const AppProvider = ({ children }) => {
     setProducts,
     setLoading,
     setError,
+    login,
+    register,
+    logout,
+    updateProfile,
+    changePassword,
+    forgotPassword,
+    hasRole,
+    isAdmin,
+    isVendedor,
     cartTotal,
     cartItemsCount
-  };
+  }), [
+    state,
+    addToCart,
+    removeFromCart,
+    updateCartQuantity,
+    clearCart,
+    setProducts,
+    setLoading,
+    setError,
+    login,
+    register,
+    logout,
+    updateProfile,
+    changePassword,
+    forgotPassword,
+    hasRole,
+    isAdmin,
+    isVendedor,
+    cartTotal,
+    cartItemsCount
+  ]);
 
   return (
     <AppContext.Provider value={value}>
