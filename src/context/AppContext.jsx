@@ -8,16 +8,17 @@ const initialState = {
   user: null,
   loading: false,
   error: null,
+  productsLoaded: false, // Flag para saber si ya se cargaron los productos
   categories: [
-    { id: 1, name: 'Mouses', slug: 'mouses' },
-    { id: 2, name: 'Teclados', slug: 'teclados' },
-    { id: 3, name: 'Micrófonos', slug: 'microfonos' },
-    { id: 4, name: 'Monitores', slug: 'monitores' },
-    { id: 5, name: 'Parlantes', slug: 'parlantes' },
-    { id: 6, name: 'Televisores', slug: 'televisores' },
-    { id: 7, name: 'Teléfonos', slug: 'telefonos' },
-    { id: 8, name: 'Audífonos', slug: 'audifonos' },
-    { id: 9, name: 'Smartwatches', slug: 'smartwatches' }
+    { id: 1, name: 'Mouse', slug: 'mouse' },
+    { id: 2, name: 'Teclado', slug: 'teclado' },
+    { id: 3, name: 'Micrófono', slug: 'microfono' },
+    { id: 4, name: 'Monitor', slug: 'monitor' },
+    { id: 5, name: 'Parlante', slug: 'parlante' },
+    { id: 6, name: 'Televisor', slug: 'televisor' },
+    { id: 7, name: 'Teléfono', slug: 'telefono' },
+    { id: 8, name: 'Audífono', slug: 'audifono' },
+    { id: 9, name: 'Smartwatch', slug: 'smartwatch' }
   ]
 };
 
@@ -26,6 +27,7 @@ const ACTIONS = {
   SET_LOADING: 'SET_LOADING',
   SET_ERROR: 'SET_ERROR',
   SET_PRODUCTS: 'SET_PRODUCTS',
+  SET_PRODUCTS_LOADED: 'SET_PRODUCTS_LOADED',
   ADD_TO_CART: 'ADD_TO_CART',
   REMOVE_FROM_CART: 'REMOVE_FROM_CART',
   UPDATE_CART_QUANTITY: 'UPDATE_CART_QUANTITY',
@@ -46,7 +48,10 @@ const appReducer = (state, action) => {
       return { ...state, error: action.payload, loading: false };
     
     case ACTIONS.SET_PRODUCTS:
-      return { ...state, products: action.payload, loading: false };
+      return { ...state, products: action.payload, loading: false, productsLoaded: true };
+    
+    case ACTIONS.SET_PRODUCTS_LOADED:
+      return { ...state, productsLoaded: action.payload };
     
     case ACTIONS.ADD_TO_CART:
       const existingItem = state.cart.find(item => item.id === action.payload.id);
@@ -131,6 +136,10 @@ export const AppProvider = ({ children }) => {
     dispatch({ type: ACTIONS.SET_PRODUCTS, payload: products });
   }, []);
 
+  const setProductsLoaded = useCallback((loaded) => {
+    dispatch({ type: ACTIONS.SET_PRODUCTS_LOADED, payload: loaded });
+  }, []);
+
   const setLoading = useCallback((loading) => {
     dispatch({ type: ACTIONS.SET_LOADING, payload: loading });
   }, []);
@@ -168,8 +177,8 @@ export const AppProvider = ({ children }) => {
       dispatch({ type: ACTIONS.SET_LOADING, payload: true });
       
       const userData = {
-        first_name: name.split(' ')[0],
-        last_name: name.split(' ').slice(1).join(' ') || '',
+        first_name: name, // Usar el nombre de usuario completo como first_name
+        last_name: '', // Dejar vacío ya que es nombre de usuario
         email: email,
         password: password,
         role: 'user' // Rol por defecto
@@ -317,6 +326,7 @@ export const AppProvider = ({ children }) => {
     updateCartQuantity,
     clearCart,
     setProducts,
+    setProductsLoaded,
     setLoading,
     setError,
     login,
@@ -337,6 +347,7 @@ export const AppProvider = ({ children }) => {
     updateCartQuantity,
     clearCart,
     setProducts,
+    setProductsLoaded,
     setLoading,
     setError,
     login,

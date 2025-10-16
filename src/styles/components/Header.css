@@ -182,20 +182,3 @@
   }
 }
 
-/* Admin Link Styles */
-.admin-link {
-  color: var(--primary-color) !important;
-  font-weight: 600;
-  background: linear-gradient(135deg, #9C2007 0%, #701705 100%);
-  color: white !important;
-  margin: 0.25rem;
-  border-radius: 0.5rem;
-  transition: var(--transition);
-}
-
-.admin-link:hover {
-  background: linear-gradient(135deg, #701705 0%, #440E03 100%);
-  color: white !important;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(156, 32, 7, 0.3);
-}

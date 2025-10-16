@@ -39,10 +39,11 @@
 
 .logo-main {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: baseline;
   font-weight: bold;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  line-height: 0.9;
+  line-height: 1;
 }
 
 .logo-electro {
@@ -55,11 +56,11 @@
   font-size: 1.2em;
   color: currentColor;
   margin: 0;
-  margin-left: 0.5rem;
+  margin-left: 0.1rem;
 }
 
 .logo-subtitle {
-  font-size: 0.6em;
+  font-size: 0.5em;
   font-weight: 500;
   letter-spacing: 0.1em;
   color: currentColor;
@@ -78,7 +79,7 @@
 }
 
 .logo-small .logo-subtitle {
-  font-size: 0.5em;
+  font-size: 0.4em;
 }
 
 .logo-medium .logo-image {
@@ -100,7 +101,7 @@
 }
 
 .logo-large .logo-subtitle {
-  font-size: 0.7em;
+  font-size: 0.6em;
 }
 
 /* Color variants */

@@ -25,6 +25,9 @@ const XANO_CONFIG = {
     
     // Usuarios y Autenticación (ajustados a tus endpoints de Xano)
     USERS: '/user',
+    CREATE_USER: '/user',
+    UPDATE_USER: (id) => `/user/${id}`,
+    DELETE_USER: (id) => `/user/${id}`,
     LOGIN: '/auth/login',
     REGISTER: '/auth/signup',
     PROFILE: '/auth/me',
@@ -89,7 +92,21 @@ class XanoAPI {
       const response = await fetch(url, defaultOptions);
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Leer el cuerpo de la respuesta para diagnóstico
+        const responseText = await response.text();
+        console.error('Xano API Error Details:', {
+          method: options.method || 'GET',
+          url: url,
+          status: response.status,
+          statusText: response.statusText,
+          responseBody: responseText,
+          requestPayload: options.body ? JSON.parse(options.body) : null
+        });
+        
+        throw new Error(
+          `HTTP ${response.status} ${response.statusText} ${options.method || 'GET'} ${url}\n` +
+          `Response: ${responseText}`
+        );
       }
       
       const data = await response.json();
@@ -153,6 +170,181 @@ class XanoAPI {
     const endpoint = `${this.config.ENDPOINTS.SEARCH_PRODUCTS(query)}&${queryString}`;
     
     return this.request(endpoint);
+  }
+
+  async createProduct(productData, token) {
+    // Sanitizar el payload usando la función específica para creación
+    const sanitizedPayload = this.sanitizeCreateProductPayload(productData);
+    
+    // Si hay imágenes, agregarlas al payload
+    if (productData.images && Array.isArray(productData.images) && productData.images.length > 0) {
+      sanitizedPayload.images = productData.images;
+    }
+    
+    console.log('CreateProduct - Sanitized payload:', sanitizedPayload);
+    
+    return this.request(this.config.ENDPOINTS.PRODUCTS, {
+      method: 'POST',
+      headers: {
+        ...this.config.DEFAULT_HEADERS,
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(sanitizedPayload)
+    });
+  }
+
+  // Método de sanitización para creación de productos
+  sanitizeCreateProductPayload(input = {}) {
+    const out = {};
+    const keep = ["name", "description", "price", "stock", "brand", "category", "active"];
+
+    for (const key of keep) {
+      let val = input[key];
+      if (val === undefined || val === null) continue;
+
+      if (key === "price") {
+        const n = Number(val);
+        if (!Number.isNaN(n)) out.price = n;
+        continue;
+      }
+      if (key === "stock") {
+        const n = parseInt(val, 10);
+        if (!Number.isNaN(n)) out.stock = n;
+        continue;
+      }
+      if (key === "active") {
+        if (typeof val === "string") {
+          out.active = val.toLowerCase() === "true";
+        } else {
+          out.active = Boolean(val);
+        }
+        continue;
+      }
+      // strings: evita vacíos
+      if (typeof val === "string") {
+        const s = val.trim();
+        if (s) out[key] = s;
+        continue;
+      }
+      out[key] = val;
+    }
+
+    if (Object.keys(out).length === 0) {
+      throw new Error("Nada que crear: payload vacío tras sanitizar.");
+    }
+    return out;
+  }
+
+  async updateProduct(id, productData, token) {
+    // Sanitizar el payload usando la función local
+    const sanitizedPayload = this.sanitizeProductPayload(productData);
+    
+    console.log('UpdateProduct - Sanitized payload:', sanitizedPayload);
+    
+    return this.request(this.config.ENDPOINTS.PRODUCT_BY_ID(id), {
+      method: 'PATCH',
+      headers: {
+        ...this.config.DEFAULT_HEADERS,
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(sanitizedPayload)
+    });
+  }
+
+  // Método de sanitización interno
+  sanitizeProductPayload(input = {}) {
+    const out = {};
+    const keep = ["name", "description", "price", "stock", "brand", "category", "images", "active"];
+
+    for (const key of keep) {
+      let val = input[key];
+      if (val === undefined || val === null) continue;
+
+      if (key === "price") {
+        const n = Number(val);
+        if (!Number.isNaN(n)) out.price = n;
+        continue;
+      }
+      if (key === "stock") {
+        const n = parseInt(val, 10);
+        if (!Number.isNaN(n)) out.stock = n;
+        continue;
+      }
+      if (key === "active") {
+        if (typeof val === "string") {
+          out.active = val.toLowerCase() === "true";
+        } else {
+          out.active = Boolean(val);
+        }
+        continue;
+      }
+      if (key === "images") {
+        if (Array.isArray(val)) {
+          const arr = val.map(String).map(s => s.trim()).filter(Boolean);
+          if (arr.length) {
+            // Xano espera objetos con campos 'path', 'name', 'type', 'size', 'mime' y 'meta'
+            out.images = arr.map((url, index) => ({ 
+              path: url, 
+              name: `image_${index + 1}`,
+              type: "image",
+              size: 1024,
+              mime: "image/jpeg",
+              meta: {}
+            }));
+          }
+        } else if (typeof val === "string") {
+          if (val.includes(",")) {
+            const arr = val.split(",").map(s => s.trim()).filter(Boolean);
+            if (arr.length) {
+              out.images = arr.map((url, index) => ({ 
+                path: url, 
+                name: `image_${index + 1}`,
+                type: "image",
+                size: 1024,
+                mime: "image/jpeg",
+                meta: {}
+              }));
+            }
+          } else if (val.trim()) {
+            out.images = [{ 
+              path: val.trim(), 
+              name: "image_1",
+              type: "image",
+              size: 1024,
+              mime: "image/jpeg",
+              meta: {}
+            }];
+          }
+        }
+        continue;
+      }
+      // strings: evita vacíos
+      if (typeof val === "string") {
+        const s = val.trim();
+        if (s) out[key] = s;
+        continue;
+      }
+      out[key] = val;
+    }
+
+    // Nunca enviar id/created_at
+    delete out.id;
+    delete out.created_at;
+
+    if (Object.keys(out).length === 0) {
+      throw new Error("Nada que actualizar: payload vacío tras sanitizar.");
+    }
+    return out;
+  }
+
+  async deleteProduct(id, token) {
+    return this.request(this.config.ENDPOINTS.PRODUCT_BY_ID(id), {
+      method: 'DELETE',
+      headers: {
+        ...this.config.DEFAULT_HEADERS,
+        'Authorization': `Bearer ${token}`
+      }
+    });
   }
 
   // Métodos para categorías
@@ -325,6 +517,167 @@ class XanoAPI {
   async getFeaturedBlogs() {
     return this.request(this.config.ENDPOINTS.FEATURED_BLOGS);
   }
+
+  // Métodos para usuarios
+  async getUsers(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? 
+      `${this.config.ENDPOINTS.USERS}?${queryString}` : 
+      this.config.ENDPOINTS.USERS;
+    
+    return this.request(endpoint);
+  }
+
+  async createUser(userData, token) {
+    return this.request(this.config.ENDPOINTS.CREATE_USER, {
+      method: 'POST',
+      headers: {
+        ...this.config.DEFAULT_HEADERS,
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(userData)
+    });
+  }
+
+  async updateUser(id, userData, token) {
+    return this.request(this.config.ENDPOINTS.UPDATE_USER(id), {
+      method: 'PUT',
+      headers: {
+        ...this.config.DEFAULT_HEADERS,
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(userData)
+    });
+  }
+
+  async deleteUser(id, token) {
+    return this.request(this.config.ENDPOINTS.DELETE_USER(id), {
+      method: 'DELETE',
+      headers: {
+        ...this.config.DEFAULT_HEADERS,
+        'Authorization': `Bearer ${token}`
+      }
+    });
+  }
+}
+
+// Función para sanitizar payload de productos
+export function sanitizeProductPayload(input = {}) {
+  const out = {};
+  const keep = ["name", "description", "price", "stock", "brand", "category", "images", "active"];
+
+  for (const key of keep) {
+    let val = input[key];
+    if (val === undefined || val === null) continue;
+
+    if (key === "price") {
+      const n = Number(val);
+      if (!Number.isNaN(n)) out.price = n;
+      continue;
+    }
+    if (key === "stock") {
+      const n = parseInt(val, 10);
+      if (!Number.isNaN(n)) out.stock = n;
+      continue;
+    }
+    if (key === "active") {
+      if (typeof val === "string") {
+        out.active = val.toLowerCase() === "true";
+      } else {
+        out.active = Boolean(val);
+      }
+      continue;
+    }
+    if (key === "images") {
+      if (Array.isArray(val)) {
+        const arr = val.map(String).map(s => s.trim()).filter(Boolean);
+        if (arr.length) out.images = arr;
+      } else if (typeof val === "string") {
+        if (val.includes(",")) {
+          const arr = val.split(",").map(s => s.trim()).filter(Boolean);
+          if (arr.length) out.images = arr;
+        } else if (val.trim()) {
+          out.images = [val.trim()];
+        }
+      }
+      continue;
+    }
+    // strings: evita vacíos
+    if (typeof val === "string") {
+      const s = val.trim();
+      if (s) out[key] = s;
+      continue;
+    }
+    out[key] = val;
+  }
+
+  // Nunca enviar id/created_at
+  delete out.id;
+  delete out.created_at;
+
+  if (Object.keys(out).length === 0) {
+    throw new Error("Nada que actualizar: payload vacío tras sanitizar.");
+  }
+  return out;
+}
+
+// Función para sanitizar payload de creación de productos
+export function sanitizeCreateProductPayload(input = {}) {
+  const out = {};
+  const keep = ["name", "description", "price", "stock", "brand", "category", "active"];
+
+  for (const key of keep) {
+    let val = input[key];
+    if (val === undefined || val === null) continue;
+
+    if (key === "price") {
+      const n = Number(val);
+      if (!Number.isNaN(n)) out.price = n;
+      continue;
+    }
+    if (key === "stock") {
+      const n = parseInt(val, 10);
+      if (!Number.isNaN(n)) out.stock = n;
+      continue;
+    }
+    if (key === "active") {
+      if (typeof val === "string") {
+        out.active = val.toLowerCase() === "true";
+      } else {
+        out.active = Boolean(val);
+      }
+      continue;
+    }
+    // strings: evita vacíos
+    if (typeof val === "string") {
+      const s = val.trim();
+      if (s) out[key] = s;
+      continue;
+    }
+    out[key] = val;
+  }
+
+  if (Object.keys(out).length === 0) {
+    throw new Error("Nada que crear: payload vacío tras sanitizar.");
+  }
+  return out;
+}
+
+// Función para procesar múltiples imágenes (simular upload)
+export async function uploadImages(files) {
+  if (!files?.length) throw new Error("No files selected");
+  
+  // Simular procesamiento de imágenes creando objetos con la estructura esperada
+  const uploaded = files.map((file, index) => ({
+    name: file.name || `image_${index + 1}.jpg`,
+    path: URL.createObjectURL(file), // Usar URL local temporal
+    type: file.type || "image/jpeg",
+    size: file.size || 1024,
+    mime: file.type || "image/jpeg",
+    meta: {}
+  }));
+
+  return uploaded;
 }
 
 // Crear instancia de la API

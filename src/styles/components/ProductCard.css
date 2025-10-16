@@ -63,11 +63,11 @@
 }
 
 .product-title {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #333;
-  margin-bottom: 0.5rem;
-  line-height: 1.3;
+  margin-bottom: 0.4rem;
+  line-height: 1.2;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -76,13 +76,13 @@
 
 .product-description {
   color: #666;
-  font-size: 0.9rem;
-  line-height: 1.4;
+  font-size: 0.8rem;
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .product-rating {
@@ -93,13 +93,13 @@
 
 .product-rating i {
   color: #ffc107;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .rating-text {
   color: #666;
-  font-size: 0.8rem;
-  margin-left: 0.5rem;
+  font-size: 0.7rem;
+  margin-left: 0.4rem;
 }
 
 .product-price {
@@ -112,22 +112,24 @@
 .original-price {
   color: #999;
   text-decoration: line-through;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .current-price {
   color: #9C2007;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: bold;
 }
 
 .add-to-cart-btn {
   background: linear-gradient(135deg, #9C2007 0%, #701705 100%);
   border: none;
-  border-radius: 0.5rem;
-  padding: 0.75rem;
+  border-radius: 0.4rem;
+  padding: 0.4rem 0.6rem;
   font-weight: 600;
   transition: all 0.3s ease;
+  font-size: 0.8rem;
+  line-height: 1.2;
 }
 
 .add-to-cart-btn:hover {
@@ -138,6 +140,50 @@
 
 .add-to-cart-btn:active {
   transform: translateY(0);
+}
+
+.view-details-btn {
+  border: 2px solid #9C2007;
+  color: #9C2007;
+  border-radius: 0.4rem;
+  padding: 0.4rem 0.6rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.view-details-btn:hover {
+  background: #9C2007;
+  border-color: #9C2007;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(156, 32, 7, 0.2);
+}
+
+.view-details-btn:active {
+  transform: translateY(0);
+}
+
+/* Product Actions */
+.product-actions {
+  margin-top: 0.5rem;
+}
+
+.product-actions .d-flex {
+  gap: 0.5rem;
+}
+
+.product-actions .btn {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-actions .btn i {
+  font-size: 0.7rem;
 }
 
 /* Responsive */

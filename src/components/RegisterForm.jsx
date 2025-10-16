@@ -35,9 +35,9 @@ const RegisterForm = () => {
     const newErrors = {};
     
     if (!formData.name.trim()) {
-      newErrors.name = 'El nombre es requerido';
+      newErrors.name = 'El nombre de usuario es requerido';
     } else if (formData.name.trim().length < 2) {
-      newErrors.name = 'El nombre debe tener al menos 2 caracteres';
+      newErrors.name = 'El nombre de usuario debe tener al menos 2 caracteres';
     }
     
     if (!formData.email) {
@@ -93,13 +93,13 @@ const RegisterForm = () => {
           )}
           
           <Form.Group className="mb-3">
-            <Form.Label>Nombre Completo</Form.Label>
+            <Form.Label>Nombre de Usuario</Form.Label>
             <Form.Control
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Tu nombre completo"
+              placeholder="Tu nombre de usuario"
               isInvalid={!!errors.name}
               disabled={loading}
             />

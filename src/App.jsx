@@ -8,6 +8,7 @@ import BackToTop from './components/BackToTop';
 import ErrorBoundary from './components/ErrorBoundary';
 import Home from './pages/Home';
 import Productos from './pages/Productos';
+import ProductDetail from './pages/ProductDetail';
 import Blogs from './pages/Blogs';
 import Nosotros from './pages/Nosotros';
 import Contacto from './pages/Contacto';
@@ -29,6 +30,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/productos" element={<Productos />} />
+              <Route path="/producto/:id" element={<ProductDetail />} />
               <Route path="/blogs" element={<Blogs />} />
               <Route path="/nosotros" element={<Nosotros />} />
               <Route path="/contacto" element={<Contacto />} />

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Row, Col, Card, Tab, Nav, Button, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Card, Tab, Nav, Button, Alert, Badge } from 'react-bootstrap';
 import { useApp } from '../context/AppContext';
 import ProductManager from './admin/ProductManager';
 import UserManager from './admin/UserManager';

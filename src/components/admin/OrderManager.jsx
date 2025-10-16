@@ -18,46 +18,12 @@ const OrderManager = () => {
   const loadOrders = async () => {
     try {
       setLoading(true);
-      // Simular carga de órdenes (reemplazar con llamada real a Xano)
-      const mockOrders = [
-        {
-          id: 1,
-          order_number: 'ORD-001',
-          customer_name: 'Juan Pérez',
-          customer_email: 'juan@example.com',
-          total: 149990,
-          status: 'pending',
-          created_at: '2024-01-15T10:30:00Z',
-          items: [
-            { name: 'Logitech G Pro X Superlight', quantity: 1, price: 149990 }
-          ]
-        },
-        {
-          id: 2,
-          order_number: 'ORD-002',
-          customer_name: 'María González',
-          customer_email: 'maria@example.com',
-          total: 99990,
-          status: 'shipped',
-          created_at: '2024-01-20T14:15:00Z',
-          items: [
-            { name: 'Razer Huntsman Mini', quantity: 1, price: 99990 }
-          ]
-        },
-        {
-          id: 3,
-          order_number: 'ORD-003',
-          customer_name: 'Carlos López',
-          customer_email: 'carlos@example.com',
-          total: 399990,
-          status: 'delivered',
-          created_at: '2024-01-25T09:45:00Z',
-          items: [
-            { name: 'Sony WH-1000XM5', quantity: 1, price: 399990 }
-          ]
-        }
-      ];
-      setOrders(mockOrders);
+      // TODO: Implementar carga de órdenes desde Xano
+      // const ordersData = await xano.getOrders();
+      // setOrders(ordersData);
+      
+      // Por ahora, mostrar mensaje de que no hay órdenes
+      setOrders([]);
     } catch (error) {
       console.error('Error loading orders:', error);
       setError('Error al cargar órdenes');

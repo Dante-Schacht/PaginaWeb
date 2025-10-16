@@ -10,6 +10,35 @@ import {
   mapError
 } from '../utils/dataAdapter';
 
+// Sistema de rate limiting profesional
+class RateLimiter {
+  constructor() {
+    this.requests = [];
+    this.maxRequests = 5; // Máximo 5 requests por minuto
+    this.windowMs = 60000; // Ventana de 1 minuto
+  }
+
+  canMakeRequest() {
+    const now = Date.now();
+    // Limpiar requests antiguos
+    this.requests = this.requests.filter(time => now - time < this.windowMs);
+    
+    return this.requests.length < this.maxRequests;
+  }
+
+  recordRequest() {
+    this.requests.push(Date.now());
+  }
+
+  getWaitTime() {
+    if (this.requests.length === 0) return 0;
+    const oldestRequest = Math.min(...this.requests);
+    return Math.max(0, this.windowMs - (Date.now() - oldestRequest));
+  }
+}
+
+const rateLimiter = new RateLimiter();
+
 // Hook para manejar el estado de carga y errores
 export const useXanoState = () => {
   const [loading, setLoading] = useState(false);
@@ -333,18 +362,45 @@ const useXano = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const handleRequest = async (requestFn) => {
+  const handleRequest = async (requestFn, retries = 3) => {
+    console.log('handleRequest: Iniciando request...');
     setLoading(true);
     setError(null);
     
-    try {
-      const result = await requestFn();
-      return result;
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
+    // Verificar rate limiting (temporalmente deshabilitado para debugging)
+    // if (!rateLimiter.canMakeRequest()) {
+    //   const waitTime = rateLimiter.getWaitTime();
+    //   console.log(`Rate limit reached. Waiting ${waitTime}ms...`);
+    //   await new Promise(resolve => setTimeout(resolve, waitTime));
+    // }
+
+    for (let i = 0; i < retries; i++) {
+      try {
+        console.log(`handleRequest: Intento ${i + 1}/${retries}`);
+        // Registrar request (temporalmente deshabilitado)
+        // rateLimiter.recordRequest();
+        
+        const result = await requestFn();
+        console.log('handleRequest: Request exitoso:', result);
+        return result;
+      } catch (err) {
+        console.error(`Request failed (attempt ${i + 1}/${retries}):`, err);
+        
+        // Si es error 429, esperar más tiempo
+        if (err.message.includes('429')) {
+          const waitTime = Math.pow(2, i) * 2000; // Backoff más agresivo para 429
+          console.log(`Rate limited. Waiting ${waitTime}ms...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+        } else if (i === retries - 1) {
+          setError(err.message);
+          throw err;
+        } else {
+          // Backoff exponencial normal
+          const delay = Math.pow(2, i) * 1000;
+          console.log(`Backoff normal. Waiting ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
     }
   };
 
@@ -355,9 +411,14 @@ const useXano = () => {
     // Métodos de productos (con mapeo)
     getProducts: async (params) => {
       try {
+        console.log('useXano: Obteniendo productos con params:', params);
         const data = await handleRequest(() => xanoAPI.getProducts(params));
-        return Array.isArray(data) ? data.map(mapProduct) : [];
+        console.log('useXano: Datos recibidos de Xano:', data);
+        const mappedData = Array.isArray(data) ? data.map(mapProduct) : [];
+        console.log('useXano: Productos mapeados:', mappedData);
+        return mappedData;
       } catch (error) {
+        console.error('useXano: Error en getProducts:', error);
         throw new Error(mapError(error));
       }
     },
@@ -381,6 +442,36 @@ const useXano = () => {
       try {
         const data = await handleRequest(() => xanoAPI.searchProducts(query, params));
         return Array.isArray(data) ? data.map(mapProduct) : [];
+      } catch (error) {
+        throw new Error(mapError(error));
+      }
+    },
+    createProduct: async (productData) => {
+      try {
+        const token = localStorage.getItem('electroverse-token');
+        if (!token) throw new Error('No hay token de autenticación');
+        const data = await handleRequest(() => xanoAPI.createProduct(productData, token));
+        return data;
+      } catch (error) {
+        throw new Error(mapError(error));
+      }
+    },
+    updateProduct: async (id, productData) => {
+      try {
+        const token = localStorage.getItem('electroverse-token');
+        if (!token) throw new Error('No hay token de autenticación');
+        const data = await handleRequest(() => xanoAPI.updateProduct(id, productData, token));
+        return data;
+      } catch (error) {
+        throw new Error(mapError(error));
+      }
+    },
+    deleteProduct: async (id) => {
+      try {
+        const token = localStorage.getItem('electroverse-token');
+        if (!token) throw new Error('No hay token de autenticación');
+        const data = await handleRequest(() => xanoAPI.deleteProduct(id, token));
+        return data;
       } catch (error) {
         throw new Error(mapError(error));
       }

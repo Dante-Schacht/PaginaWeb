@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Button, Form, Modal, Alert, Badge, Table } from 'react-bootstrap';
 import { useApp } from '../../context/AppContext';
 import useXano from '../../hooks/useXano';
+import { uploadImages } from '../../config/xano';
 
 const ProductManager = () => {
-  const { products, setProducts } = useApp();
+  const { products, setProducts, productsLoaded } = useApp();
   const xano = useXano();
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -23,21 +24,135 @@ const ProductManager = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [previews, setPreviews] = useState([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   useEffect(() => {
-    loadProducts();
-  }, []);
+    // Solo cargar si no hay productos cargados
+    if (!productsLoaded) {
+      loadProducts();
+    }
+  }, [productsLoaded]);
 
   const loadProducts = async () => {
     try {
       setLoading(true);
+      console.log('ProductManager: Cargando productos...');
       const productsData = await xano.getProducts();
-      setProducts(productsData);
+      console.log('ProductManager: Productos cargados:', productsData);
+      setProducts(productsData); // Esto actualiza el contexto global
     } catch (error) {
-      console.error('Error loading products:', error);
+      console.error('ProductManager: Error loading products:', error);
+      setError('Error al cargar productos: ' + error.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Función para manejar la selección de imágenes
+  const handleImageSelect = (e) => {
+    const files = Array.from(e.target.files);
+    
+    // Validar límite de 10 imágenes
+    if (files.length > 10) {
+      setError('Máximo 10 imágenes permitidas');
+      return;
+    }
+    
+    // Validar tipo de archivo
+    const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
+    if (invalidFiles.length > 0) {
+      setError('Solo se permiten archivos de imagen');
+      return;
+    }
+    
+    // Validar tamaño (5MB máximo)
+    const oversizedFiles = files.filter(file => file.size > 5 * 1024 * 1024);
+    if (oversizedFiles.length > 0) {
+      setError('Algunas imágenes exceden el límite de 5MB');
+      return;
+    }
+    
+    setSelectedFiles(files);
+    setPreviews(files.map(f => URL.createObjectURL(f)));
+    setError(null);
+  };
+
+  // Función para limpiar previews
+  const clearPreviews = () => {
+    previews.forEach(url => URL.revokeObjectURL(url));
+    setPreviews([]);
+    setSelectedFiles([]);
+  };
+
+  // Función para generar detalles automáticamente
+  const generateProductDetails = (productName, category, brand) => {
+    const detailsMap = {
+      'Teclado': {
+        features: ['Switches mecánicos', 'Retroiluminación RGB', 'Anti-ghosting', 'Cable desmontable'],
+        specifications: {
+          'Tipo de switch': 'Mecánico',
+          'Retroiluminación': 'RGB personalizable',
+          'Conectividad': 'USB-C',
+          'Compatibilidad': 'Windows, Mac, Linux'
+        }
+      },
+      'Mouse': {
+        features: ['Sensor óptico de alta precisión', 'Botones programables', 'Peso ajustable', 'Cable flexible'],
+        specifications: {
+          'DPI': 'Hasta 12,000 DPI',
+          'Polling Rate': '1000 Hz',
+          'Conectividad': 'USB',
+          'Botones': '6 botones programables'
+        }
+      },
+      'Monitor': {
+        features: ['Panel IPS', 'Alta frecuencia de actualización', 'Tecnología HDR', 'Ajuste de altura'],
+        specifications: {
+          'Tamaño': '27 pulgadas',
+          'Resolución': '2560x1440',
+          'Frecuencia': '144 Hz',
+          'Tiempo de respuesta': '1ms'
+        }
+      },
+      'Audífonos': {
+        features: ['Cancelación de ruido activa', 'Audio de alta fidelidad', 'Micrófono integrado', 'Batería de larga duración'],
+        specifications: {
+          'Tipo': 'Over-ear',
+          'Conectividad': 'Bluetooth 5.0',
+          'Batería': 'Hasta 30 horas',
+          'Cancelación de ruido': 'Activa'
+        }
+      },
+      'Micrófono': {
+        features: ['Patrón cardioide', 'Filtro de pop integrado', 'Conectividad USB', 'Control de ganancia'],
+        specifications: {
+          'Tipo': 'Condensador',
+          'Patrón': 'Cardioide',
+          'Frecuencia': '20Hz - 20kHz',
+          'Conectividad': 'USB'
+        }
+      }
+    };
+
+    // Buscar coincidencias en el nombre del producto
+    for (const [key, details] of Object.entries(detailsMap)) {
+      if (productName.toLowerCase().includes(key.toLowerCase())) {
+        return details;
+      }
+    }
+
+    // Detalles genéricos si no hay coincidencia
+    return {
+      features: ['Alta calidad', 'Diseño ergonómico', 'Fácil instalación', 'Garantía extendida'],
+      specifications: {
+        'Marca': brand || 'ElectroVerse',
+        'Categoría': category,
+        'Garantía': '1 año',
+        'Origen': 'Importado'
+      }
+    };
   };
 
   const handleSubmit = async (e) => {
@@ -47,14 +162,33 @@ const ProductManager = () => {
     setSuccess(null);
 
     try {
+      let uploadedImages = [];
+      
+      // Si hay archivos seleccionados, subirlos primero
+      if (selectedFiles.length > 0) {
+        setUploadingImages(true);
+        try {
+          uploadedImages = await uploadImages(selectedFiles);
+          console.log('Imágenes subidas:', uploadedImages);
+        } catch (uploadError) {
+          console.error('Error uploading images:', uploadError);
+          setError('Error al subir las imágenes: ' + uploadError.message);
+          return;
+        } finally {
+          setUploadingImages(false);
+        }
+      }
+      
+      // Preparar datos en el formato que espera Xano
       const productData = {
-        ...formData,
-        price: parseFloat(formData.price),
-        originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
-        stock: parseInt(formData.stock),
-        discount: formData.discount ? parseInt(formData.discount) : null,
-        rating: 0,
-        reviews: 0
+        name: formData.name,
+        description: formData.description,
+        price: formData.price,
+        stock: formData.stock,
+        brand: formData.brand,
+        category: formData.category,
+        images: uploadedImages, // Usar las imágenes subidas
+        active: true
       };
 
       if (editingProduct) {
@@ -70,7 +204,7 @@ const ProductManager = () => {
       // Recargar productos
       await loadProducts();
       
-      // Limpiar formulario
+      // Limpiar formulario y previews
       setFormData({
         name: '',
         description: '',
@@ -83,10 +217,16 @@ const ProductManager = () => {
         isNew: false,
         discount: ''
       });
+      clearPreviews();
       setEditingProduct(null);
       setShowModal(false);
     } catch (error) {
-      setError('Error al guardar el producto: ' + error.message);
+      console.error('Error saving product:', error);
+      // Mostrar el mensaje exacto del backend si está disponible
+      const errorMessage = error.message.includes('HTTP') ? 
+        error.message.split('\n')[1] || error.message : 
+        error.message;
+      setError('Error al guardar el producto: ' + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -106,6 +246,8 @@ const ProductManager = () => {
       isNew: product.isNew || false,
       discount: product.discount || ''
     });
+    // Limpiar previews al editar
+    clearPreviews();
     setShowModal(true);
   };
 
@@ -148,7 +290,7 @@ const ProductManager = () => {
           <i className="bi bi-box-seam me-2"></i>
           Gestión de Productos
         </h4>
-        <Button 
+        <Button
           variant="primary"
           onClick={() => {
             setEditingProduct(null);
@@ -164,6 +306,8 @@ const ProductManager = () => {
               isNew: false,
               discount: ''
             });
+            // Limpiar previews al agregar
+            clearPreviews();
             setShowModal(true);
           }}
         >
@@ -399,14 +543,48 @@ const ProductManager = () => {
             </Row>
 
             <Form.Group className="mb-3">
-              <Form.Label>URL de la Imagen</Form.Label>
+              <Form.Label>Imágenes del Producto (máximo 10)</Form.Label>
               <Form.Control
-                type="url"
-                name="image"
-                value={formData.image}
-                onChange={handleInputChange}
-                placeholder="https://ejemplo.com/imagen.jpg"
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="mb-2"
               />
+              <Form.Text className="text-muted">
+                Selecciona hasta 10 imágenes. Las imágenes se procesarán localmente para crear el producto.
+              </Form.Text>
+              
+              {/* Preview de imágenes */}
+              {previews.length > 0 && (
+                <div className="mt-3">
+                  <Form.Label className="text-muted">Vista previa:</Form.Label>
+                  <div className="d-flex flex-wrap gap-2">
+                    {previews.map((src, index) => (
+                      <div key={index} className="position-relative">
+                        <img 
+                          src={src} 
+                          alt={`Preview ${index + 1}`}
+                          style={{ 
+                            width: '80px', 
+                            height: '80px', 
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '2px solid #dee2e6'
+                          }}
+                        />
+                        <Badge 
+                          bg="secondary" 
+                          className="position-absolute top-0 end-0 translate-middle"
+                          style={{ fontSize: '0.7rem' }}
+                        >
+                          {index + 1}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </Form.Group>
 
             <Form.Group className="mb-3">
@@ -423,8 +601,15 @@ const ProductManager = () => {
             <Button variant="secondary" onClick={() => setShowModal(false)}>
               Cancelar
             </Button>
-            <Button variant="primary" type="submit" disabled={loading}>
-              {loading ? 'Guardando...' : (editingProduct ? 'Actualizar' : 'Crear')}
+            <Button variant="primary" type="submit" disabled={loading || uploadingImages}>
+              {loading || uploadingImages ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  {uploadingImages ? 'Subiendo imágenes...' : (editingProduct ? 'Actualizando...' : 'Creando...')}
+                </>
+              ) : (
+                editingProduct ? 'Actualizar Producto' : 'Crear Producto'
+              )}
             </Button>
           </Modal.Footer>
         </Form>

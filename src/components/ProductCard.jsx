@@ -1,15 +1,22 @@
 import React from 'react';
 import { Card, Button, Badge, Spinner } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import useImageLoader from '../hooks/useImageLoader';
 import '../styles/components/ProductCard.css';
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useApp();
+  const navigate = useNavigate();
   const { imageSrc, isLoading } = useImageLoader(product.image);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e) => {
+    e.stopPropagation();
     addToCart(product);
+  };
+
+  const handleCardClick = () => {
+    navigate(`/producto/${product.id}`);
   };
 
   const formatPrice = (price) => {
@@ -22,7 +29,7 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <Card className="product-card h-100">
+    <Card className="product-card h-100" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
       <div className="product-image-container">
         {isLoading ? (
           <div className="product-image-loading d-flex align-items-center justify-content-center">
@@ -84,14 +91,27 @@ const ProductCard = ({ product }) => {
         </div>
         
         <div className="product-actions mt-auto">
-          <Button 
-            variant="primary" 
-            className="add-to-cart-btn w-100"
-            onClick={handleAddToCart}
-          >
-            <i className="bi bi-cart-plus me-2"></i>
-            Agregar al Carrito
-          </Button>
+          <div className="d-flex gap-1">
+            <Button 
+              variant="outline-primary" 
+              className="view-details-btn flex-fill"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCardClick();
+              }}
+            >
+              <i className="bi bi-eye me-2"></i>
+              Ver Detalles
+            </Button>
+            <Button 
+              variant="primary" 
+              className="add-to-cart-btn flex-fill"
+              onClick={handleAddToCart}
+            >
+              <i className="bi bi-cart-plus me-2"></i>
+              Agregar
+            </Button>
+          </div>
         </div>
       </Card.Body>
     </Card>

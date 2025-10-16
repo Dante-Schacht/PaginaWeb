@@ -19,7 +19,7 @@ const Logo = ({ size = 'medium', showText = true, className = '', iconOnly = fal
       <div className="logo-container">
         <div className="logo-icon">
           <img 
-            src="/logo.png" 
+            src="/logo1.png" 
             alt="ElectroVerse Logo" 
             className="logo-image"
           />
@@ -27,8 +27,7 @@ const Logo = ({ size = 'medium', showText = true, className = '', iconOnly = fal
         {showText && !iconOnly && (
           <div className="logo-text">
             <div className="logo-main">
-              <span className="logo-electro">Electro</span>
-              <span className="logo-verse">Verse</span>
+              <span className="logo-electro">Electro</span><span className="logo-verse">Verse</span>
             </div>
             <div className="logo-subtitle">ELECTRONICS STORE</div>
           </div>

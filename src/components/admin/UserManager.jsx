@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Button, Form, Modal, Alert, Badge, Table } from 'react-bootstrap';
 import { useApp } from '../../context/AppContext';
 import useXano from '../../hooks/useXano';
+import xanoAPI from '../../config/xano';
 
 const UserManager = () => {
   const { user } = useApp();
@@ -13,6 +14,7 @@ const UserManager = () => {
     first_name: '',
     last_name: '',
     email: '',
+    password: '',
     role: 'user',
     is_active: true
   });
@@ -27,40 +29,26 @@ const UserManager = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      // Simular carga de usuarios (reemplazar con llamada real a Xano)
-      const mockUsers = [
-        {
-          id: 1,
-          first_name: 'Juan',
-          last_name: 'Pérez',
-          email: 'juan@example.com',
-          role: 'admin',
-          is_active: true,
-          created_at: '2024-01-15'
-        },
-        {
-          id: 2,
-          first_name: 'María',
-          last_name: 'González',
-          email: 'maria@example.com',
-          role: 'user',
-          is_active: true,
-          created_at: '2024-01-20'
-        },
-        {
-          id: 3,
-          first_name: 'Carlos',
-          last_name: 'López',
-          email: 'carlos@example.com',
-          role: 'vendedor',
-          is_active: false,
-          created_at: '2024-01-25'
-        }
-      ];
-      setUsers(mockUsers);
+      setError(null);
+      
+      // Obtener token del usuario actual
+      const token = localStorage.getItem('electroverse-token');
+      if (!token) {
+        throw new Error('No hay token de autenticación');
+      }
+      
+      // Cargar usuarios desde Xano
+      const usersData = await xanoAPI.getUsers({}, token);
+      
+      if (usersData && Array.isArray(usersData)) {
+        setUsers(usersData);
+      } else {
+        setUsers([]);
+      }
     } catch (error) {
       console.error('Error loading users:', error);
-      setError('Error al cargar usuarios');
+      setError('Error al cargar usuarios: ' + error.message);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -73,11 +61,23 @@ const UserManager = () => {
     setSuccess(null);
 
     try {
+      // Obtener token del usuario actual
+      const token = localStorage.getItem('electroverse-token');
+      if (!token) {
+        throw new Error('No hay token de autenticación');
+      }
+
       if (editingUser) {
         // Actualizar usuario existente
+        await xanoAPI.updateUser(editingUser.id, formData, token);
         setSuccess('Usuario actualizado correctamente');
       } else {
         // Crear nuevo usuario
+        const userData = {
+          ...formData,
+          password_confirmation: formData.password
+        };
+        await xanoAPI.createUser(userData, token);
         setSuccess('Usuario creado correctamente');
       }
 
@@ -89,12 +89,14 @@ const UserManager = () => {
         first_name: '',
         last_name: '',
         email: '',
+        password: '',
         role: 'user',
         is_active: true
       });
       setEditingUser(null);
       setShowModal(false);
     } catch (error) {
+      console.error('Error saving user:', error);
       setError('Error al guardar el usuario: ' + error.message);
     } finally {
       setLoading(false);
@@ -107,6 +109,7 @@ const UserManager = () => {
       first_name: user.first_name || '',
       last_name: user.last_name || '',
       email: user.email || '',
+      password: '', // No mostrar contraseña existente
       role: user.role || 'user',
       is_active: user.is_active !== false
     });
@@ -117,9 +120,20 @@ const UserManager = () => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
       try {
         setLoading(true);
+        setError(null);
+        
+        // Obtener token del usuario actual
+        const token = localStorage.getItem('electroverse-token');
+        if (!token) {
+          throw new Error('No hay token de autenticación');
+        }
+        
+        // Eliminar usuario desde Xano
+        await xanoAPI.deleteUser(userId, token);
         setSuccess('Usuario eliminado correctamente');
         await loadUsers();
       } catch (error) {
+        console.error('Error deleting user:', error);
         setError('Error al eliminar el usuario: ' + error.message);
       } finally {
         setLoading(false);
@@ -161,6 +175,7 @@ const UserManager = () => {
               first_name: '',
               last_name: '',
               email: '',
+              password: '',
               role: 'user',
               is_active: true
             });
@@ -295,6 +310,20 @@ const UserManager = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 required
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>
+                Contraseña {editingUser ? '(dejar vacío para mantener la actual)' : '*'}
+              </Form.Label>
+              <Form.Control
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder={editingUser ? 'Nueva contraseña (opcional)' : 'Contraseña del usuario'}
+                required={!editingUser}
               />
             </Form.Group>
 

@@ -104,7 +104,7 @@ const Header = () => {
                     {isAdmin() && (
                       <>
                         <Dropdown.Divider />
-                        <Dropdown.Item as={Link} to="/admin" className="admin-link">
+                        <Dropdown.Item as={Link} to="/admin">
                           <i className="bi bi-gear me-2"></i>
                           Panel de Administración
                         </Dropdown.Item>
