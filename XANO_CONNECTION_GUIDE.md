@@ -23,13 +23,13 @@ VITE_AUTH_URL=https://x8ki-letl-twmt.n7.xano.io/api:QbleTY9C
 - En modo desarrollo, verás un componente "Prueba de Conexión con Xano"
 - Haz clic en "Ejecutar Pruebas" para verificar la conexión
 
-### **2. Usando la Consola del Navegador:**
+### **2. Usando la Consola del Navegador con axios:**
 ```javascript
 // Copia y pega este código en la consola del navegador
-fetch('https://x8ki-letl-twmt.n7.xano.io/api:SzMZfFwX/products')
-  .then(response => response.json())
-  .then(data => console.log('✅ Conexión exitosa:', data))
-  .catch(error => console.error('❌ Error:', error));
+// Primero importa axios: import('https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js')
+axios.get('https://x8ki-letl-twmt.n7.xano.io/api:SzMZfFwX/products')
+  .then(response => console.log('✅ Conexión exitosa:', response.data))
+  .catch(error => console.error('❌ Error:', error.response?.data || error.message));
 ```
 
 ### **3. Usando el Script de Prueba:**

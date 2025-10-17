@@ -1,7 +1,9 @@
+import axios from 'axios';
+
 // Xano API Configuration
 const XANO_CONFIG = {
   // Base URL de tu API de Xano
-  BASE_URL: import.meta.env.VITE_API_URL || 'https://x8ki-letl-twmt.n7.xano.io/api:SzMZfFwX',
+  BASE_URL: import.meta.env.VITE_XANO_BASE_URL || 'https://x8ki-letl-twmt.n7.xano.io/api:SzMZfFwX',
   
   // Auth URL separada para autenticación
   AUTH_URL: import.meta.env.VITE_AUTH_URL || 'https://x8ki-letl-twmt.n7.xano.io/api:QbleTY9C',
@@ -79,65 +81,82 @@ class XanoAPI {
     this.authURL = config.AUTH_URL;
   }
 
-  // Método para hacer requests HTTP
-  async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
-    const defaultOptions = {
-      headers: this.config.DEFAULT_HEADERS,
+  // Método para hacer requests HTTP con axios
+  async request(endpoint, options = {}, customBaseURL = null) {
+    const baseURL = customBaseURL || this.baseURL;
+    const url = `${baseURL}${endpoint}`;
+    const axiosConfig = {
+      url,
+      method: options.method || 'GET',
+      headers: {
+        ...this.config.DEFAULT_HEADERS,
+        ...options.headers
+      },
       timeout: this.config.TIMEOUT,
       ...options
     };
 
+    // Si hay body, convertir a data y remover body
+    if (options.body) {
+      axiosConfig.data = options.body;
+      delete axiosConfig.body;
+    }
+
     try {
-      const response = await fetch(url, defaultOptions);
-      
-      if (!response.ok) {
-        // Leer el cuerpo de la respuesta para diagnóstico
-        const responseText = await response.text();
-        console.error('Xano API Error Details:', {
-          method: options.method || 'GET',
-          url: url,
-          status: response.status,
-          statusText: response.statusText,
-          responseBody: responseText,
-          requestPayload: options.body ? JSON.parse(options.body) : null
-        });
-        
-        throw new Error(
-          `HTTP ${response.status} ${response.statusText} ${options.method || 'GET'} ${url}\n` +
-          `Response: ${responseText}`
-        );
-      }
-      
-      const data = await response.json();
-      return data;
+      const response = await axios(axiosConfig);
+      return response.data;
     } catch (error) {
-      console.error('Xano API Error:', error);
-      throw error;
+      console.error('Xano API Error Details:', {
+        method: axiosConfig.method,
+        url: url,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        responseBody: error.response?.data,
+        requestPayload: axiosConfig.data
+      });
+      
+      if (error.response) {
+        throw new Error(
+          `HTTP ${error.response.status} ${error.response.statusText} ${axiosConfig.method} ${url}\n` +
+          `Response: ${JSON.stringify(error.response.data)}`
+        );
+      } else {
+        throw new Error(`Network error: ${error.message}`);
+      }
     }
   }
 
-  // Método para hacer requests de autenticación
+  // Método para hacer requests de autenticación con axios
   async authRequest(endpoint, options = {}) {
     const url = `${this.authURL}${endpoint}`;
-    const defaultOptions = {
-      headers: this.config.DEFAULT_HEADERS,
+    const axiosConfig = {
+      url,
+      method: options.method || 'GET',
+      headers: {
+        ...this.config.DEFAULT_HEADERS,
+        ...options.headers
+      },
       timeout: this.config.TIMEOUT,
       ...options
     };
 
+    // Si hay body, convertir a data y remover body
+    if (options.body) {
+      axiosConfig.data = options.body;
+      delete axiosConfig.body;
+    }
+
     try {
-      const response = await fetch(url, defaultOptions);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      return data;
+      const response = await axios(axiosConfig);
+      return response.data;
     } catch (error) {
       console.error('Xano Auth API Error:', error);
-      throw error;
+      
+      if (error.response) {
+        throw new Error(`HTTP ${error.response.status} ${error.response.statusText}: ${JSON.stringify(error.response.data)}`);
+      } else {
+        throw new Error(`Network error: ${error.message}`);
+      }
     }
   }
 
@@ -189,7 +208,7 @@ class XanoAPI {
         ...this.config.DEFAULT_HEADERS,
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(sanitizedPayload)
+      data: sanitizedPayload
     });
   }
 
@@ -247,7 +266,7 @@ class XanoAPI {
         ...this.config.DEFAULT_HEADERS,
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(sanitizedPayload)
+      data: sanitizedPayload
     });
   }
 
@@ -360,32 +379,32 @@ class XanoAPI {
   async addToCart(productId, quantity = 1, userId = null) {
     return this.request(this.config.ENDPOINTS.ADD_TO_CART, {
       method: 'POST',
-      body: JSON.stringify({
+      data: {
         product_id: productId,
         quantity,
         user_id: userId
-      })
+      }
     });
   }
 
   async removeFromCart(productId, userId = null) {
     return this.request(this.config.ENDPOINTS.REMOVE_FROM_CART, {
       method: 'DELETE',
-      body: JSON.stringify({
+      data: {
         product_id: productId,
         user_id: userId
-      })
+      }
     });
   }
 
   async updateCart(productId, quantity, userId = null) {
     return this.request(this.config.ENDPOINTS.UPDATE_CART, {
       method: 'PUT',
-      body: JSON.stringify({
+      data: {
         product_id: productId,
         quantity,
         user_id: userId
-      })
+      }
     });
   }
 
@@ -393,14 +412,14 @@ class XanoAPI {
   async login(email, password) {
     return this.authRequest(this.config.ENDPOINTS.LOGIN, {
       method: 'POST',
-      body: JSON.stringify({ email, password })
+      data: { email, password }
     });
   }
 
   async register(userData) {
     return this.authRequest(this.config.ENDPOINTS.REGISTER, {
       method: 'POST',
-      body: JSON.stringify(userData)
+      data: userData
     });
   }
 
@@ -430,7 +449,7 @@ class XanoAPI {
         ...this.config.DEFAULT_HEADERS,
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(userData)
+      data: userData
     });
   }
 
@@ -441,38 +460,38 @@ class XanoAPI {
         ...this.config.DEFAULT_HEADERS,
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({
+      data: {
         current_password: currentPassword,
         new_password: newPassword
-      })
+      }
     });
   }
 
   async forgotPassword(email) {
     return this.authRequest(this.config.ENDPOINTS.FORGOT_PASSWORD, {
       method: 'POST',
-      body: JSON.stringify({ email })
+      data: { email }
     });
   }
 
   async resetPassword(token, password) {
     return this.authRequest(this.config.ENDPOINTS.RESET_PASSWORD, {
       method: 'POST',
-      body: JSON.stringify({ token, password })
+      data: { token, password }
     });
   }
 
   async verifyEmail(token) {
     return this.authRequest(this.config.ENDPOINTS.VERIFY_EMAIL, {
       method: 'POST',
-      body: JSON.stringify({ token })
+      data: { token }
     });
   }
 
   async refreshToken(refreshToken) {
     return this.authRequest(this.config.ENDPOINTS.REFRESH_TOKEN, {
       method: 'POST',
-      body: JSON.stringify({ refresh_token: refreshToken })
+      data: { refresh_token: refreshToken }
     });
   }
 
@@ -480,7 +499,7 @@ class XanoAPI {
   async createOrder(orderData) {
     return this.request(this.config.ENDPOINTS.CREATE_ORDER, {
       method: 'POST',
-      body: JSON.stringify(orderData)
+      data: orderData
     });
   }
 
@@ -496,7 +515,7 @@ class XanoAPI {
   async sendContactMessage(messageData) {
     return this.request(this.config.ENDPOINTS.CONTACT, {
       method: 'POST',
-      body: JSON.stringify(messageData)
+      data: messageData
     });
   }
 
@@ -519,13 +538,20 @@ class XanoAPI {
   }
 
   // Métodos para usuarios
-  async getUsers(params = {}) {
+  async getUsers(params = {}, token) {
     const queryString = new URLSearchParams(params).toString();
     const endpoint = queryString ? 
       `${this.config.ENDPOINTS.USERS}?${queryString}` : 
       this.config.ENDPOINTS.USERS;
     
-    return this.request(endpoint);
+    // Usar la URL de autenticación para usuarios con token
+    const options = token ? {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    } : {};
+    
+    return this.request(endpoint, options, this.config.AUTH_URL);
   }
 
   async createUser(userData, token) {
@@ -535,8 +561,8 @@ class XanoAPI {
         ...this.config.DEFAULT_HEADERS,
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(userData)
-    });
+      data: userData
+    }, this.config.AUTH_URL);
   }
 
   async updateUser(id, userData, token) {
@@ -546,8 +572,8 @@ class XanoAPI {
         ...this.config.DEFAULT_HEADERS,
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(userData)
-    });
+      data: userData
+    }, this.config.AUTH_URL);
   }
 
   async deleteUser(id, token) {
@@ -557,7 +583,7 @@ class XanoAPI {
         ...this.config.DEFAULT_HEADERS,
         'Authorization': `Bearer ${token}`
       }
-    });
+    }, this.config.AUTH_URL);
   }
 }
 

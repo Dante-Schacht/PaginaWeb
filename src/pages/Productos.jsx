@@ -71,6 +71,15 @@ const Productos = () => {
     
     let filtered = products;
 
+    // Filtrar por productos activos
+    filtered = filtered.filter(product => {
+      const isActive = product.active !== false;
+      if (!isActive) {
+        console.log('Productos.jsx: Producto inactivo filtrado:', product.name);
+      }
+      return isActive;
+    });
+
     // Filtrar por categoría
     if (selectedCategory) {
       console.log('Productos.jsx: Filtrando por categoría:', selectedCategory);

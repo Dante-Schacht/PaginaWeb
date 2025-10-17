@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
-const useImageLoader = (src, fallback = '/ImagenHome.png') => {
-  const [imageSrc, setImageSrc] = useState(fallback);
+const useImageLoader = (src, fallback = null) => {
+  const [imageSrc, setImageSrc] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 

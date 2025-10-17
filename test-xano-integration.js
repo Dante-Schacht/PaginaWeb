@@ -1,7 +1,9 @@
-// Script para probar la integración con Xano
+// Script para probar la integración con Xano usando axios
 // Ejecuta esto en la consola del navegador después de crear el .env
 
-console.log('🧪 Probando integración con Xano...');
+import axios from 'axios';
+
+console.log('🧪 Probando integración con Xano usando axios...');
 
 // 1. Verificar URL de Xano
 console.log('📍 URL de Xano:', process.env.REACT_APP_XANO_BASE_URL);
@@ -9,19 +11,17 @@ console.log('📍 URL de Xano:', process.env.REACT_APP_XANO_BASE_URL);
 // 2. Probar endpoint de login
 async function testLogin() {
   try {
-    console.log('🔐 Probando login...');
-    const response = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:QbleTY9C/auth/login', {
-      method: 'POST',
+    console.log('🔐 Probando login con axios...');
+    const response = await axios.post('https://x8ki-letl-twmt.n7.xano.io/api:QbleTY9C/auth/login', {
+      email: 'test@test.com',
+      password: 'test123'
+    }, {
       headers: {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: 'test@test.com',
-        password: 'test123'
-      })
+      }
     });
     
-    const data = await response.json();
+    const data = response.data;
     console.log('✅ Respuesta del login:', data);
     
     if (data.authToken) {
@@ -30,7 +30,7 @@ async function testLogin() {
       console.log('❌ Error en login:', data);
     }
   } catch (error) {
-    console.log('❌ Error de CORS o conexión:', error);
+    console.log('❌ Error de CORS o conexión:', error.response?.data || error.message);
     console.log('💡 Solución: Habilita CORS en Xano para http://localhost:3000');
   }
 }
@@ -38,21 +38,19 @@ async function testLogin() {
 // 3. Probar endpoint de signup
 async function testSignup() {
   try {
-    console.log('📝 Probando signup...');
-    const response = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:QbleTY9C/auth/signup', {
-      method: 'POST',
+    console.log('📝 Probando signup con axios...');
+    const response = await axios.post('https://x8ki-letl-twmt.n7.xano.io/api:QbleTY9C/auth/signup', {
+      first_name: 'Test',
+      last_name: 'User',
+      email: 'test@test.com',
+      password: 'test123'
+    }, {
       headers: {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        first_name: 'Test',
-        last_name: 'User',
-        email: 'test@test.com',
-        password: 'test123'
-      })
+      }
     });
     
-    const data = await response.json();
+    const data = response.data;
     console.log('✅ Respuesta del signup:', data);
     
     if (data.authToken) {
@@ -61,7 +59,7 @@ async function testSignup() {
       console.log('❌ Error en signup:', data);
     }
   } catch (error) {
-    console.log('❌ Error de CORS o conexión:', error);
+    console.log('❌ Error de CORS o conexión:', error.response?.data || error.message);
     console.log('💡 Solución: Habilita CORS en Xano para http://localhost:3000');
   }
 }

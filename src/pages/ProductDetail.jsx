@@ -20,7 +20,10 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [showDetails, setShowDetails] = useState(false);
-  const { imageSrc, isLoading } = useImageLoader(product?.image);
+  
+  // Usar la imagen seleccionada del carrusel en lugar de la imagen principal
+  const currentImageSrc = product?.additionalImages?.[selectedImageIndex] || product?.image;
+  const { imageSrc, isLoading } = useImageLoader(currentImageSrc);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -124,7 +127,11 @@ const ProductDetail = () => {
   }
 
   // Usar las imágenes adicionales del producto
-  const additionalImages = product?.additionalImages || [product?.image] || ['/ImagenHome.png'];
+  const additionalImages = product?.additionalImages?.length > 0 
+    ? product.additionalImages 
+    : product?.image 
+      ? [product.image] 
+      : [];
 
   return (
     <div className="product-detail-page">
@@ -155,18 +162,30 @@ const ProductDetail = () => {
           {/* Imagen principal y carrusel */}
           <Col lg={6} className="mb-4">
             <div className="product-images">
-              {/* Imagen principal */}
+              {/* Imagen principal - Muestra la imagen seleccionada del carrusel */}
               <div className="main-image-container mb-3">
                 {isLoading ? (
                   <div className="main-image-loading d-flex align-items-center justify-content-center">
                     <Spinner animation="border" />
                   </div>
-                ) : (
+                ) : imageSrc ? (
                   <img 
+                    key={`${selectedImageIndex}-${imageSrc}`}
                     src={imageSrc} 
-                    alt={product.name}
+                    alt={`${product.name} - Imagen ${selectedImageIndex + 1}`}
                     className="main-image"
+                    style={{
+                      animation: 'fadeIn 0.3s ease-in-out'
+                    }}
                   />
+                ) : (
+                  <div className="main-image-placeholder d-flex align-items-center justify-content-center">
+                    <div className="placeholder-content text-center">
+                      <i className="bi bi-image display-1 text-muted mb-3"></i>
+                      <h5 className="text-muted">Sin imagen disponible</h5>
+                      <p className="text-muted">{product.name}</p>
+                    </div>
+                  </div>
                 )}
                 {product.discount && (
                   <Badge bg="danger" className="discount-badge">
@@ -178,45 +197,62 @@ const ProductDetail = () => {
                     Nuevo
                   </Badge>
                 )}
+                
+                {/* Indicador de imagen actual si hay múltiples */}
+                {additionalImages.length > 1 && (
+                  <div className="image-counter">
+                    <span className="badge bg-dark">
+                      {selectedImageIndex + 1} / {additionalImages.length}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {/* Carrusel de imágenes adicionales */}
-              <Carousel 
-                activeIndex={selectedImageIndex}
-                onSelect={setSelectedImageIndex}
-                className="product-carousel"
-                controls={additionalImages.length > 1}
-                indicators={false}
-              >
-                {additionalImages.map((image, index) => (
-                  <Carousel.Item key={index}>
-                    <div className="carousel-image-container">
-                      <img 
-                        src={image} 
-                        alt={`${product.name} - Imagen ${index + 1}`}
-                        className="carousel-image"
-                      />
-                    </div>
-                  </Carousel.Item>
-                ))}
-              </Carousel>
-
-              {/* Miniaturas */}
+              {/* Navegación de imágenes - Solo mostrar si hay múltiples imágenes */}
               {additionalImages.length > 1 && (
-                <div className="image-thumbnails mt-3">
-                  {additionalImages.map((image, index) => (
-                    <button
-                      key={index}
-                      className={`thumbnail-btn ${selectedImageIndex === index ? 'active' : ''}`}
-                      onClick={() => setSelectedImageIndex(index)}
+                <div className="image-navigation">
+                  {/* Controles de navegación */}
+                  <div className="navigation-controls d-flex justify-content-between align-items-center mb-3">
+                    <Button
+                      variant="outline-secondary"
+                      size="sm"
+                      onClick={() => setSelectedImageIndex(Math.max(0, selectedImageIndex - 1))}
+                      disabled={selectedImageIndex === 0}
                     >
-                      <img 
-                        src={image} 
-                        alt={`Miniatura ${index + 1}`}
-                        className="thumbnail-image"
-                      />
-                    </button>
-                  ))}
+                      <i className="bi bi-chevron-left"></i> Anterior
+                    </Button>
+                    
+                    <span className="text-muted">
+                      Imagen {selectedImageIndex + 1} de {additionalImages.length}
+                    </span>
+                    
+                    <Button
+                      variant="outline-secondary"
+                      size="sm"
+                      onClick={() => setSelectedImageIndex(Math.min(additionalImages.length - 1, selectedImageIndex + 1))}
+                      disabled={selectedImageIndex === additionalImages.length - 1}
+                    >
+                      Siguiente <i className="bi bi-chevron-right"></i>
+                    </Button>
+                  </div>
+
+                  {/* Miniaturas */}
+                  <div className="image-thumbnails">
+                    {additionalImages.map((image, index) => (
+                      <button
+                        key={index}
+                        className={`thumbnail-btn ${selectedImageIndex === index ? 'active' : ''}`}
+                        onClick={() => setSelectedImageIndex(index)}
+                        title={`Ver imagen ${index + 1}`}
+                      >
+                        <img 
+                          src={image} 
+                          alt={`Miniatura ${index + 1}`}
+                          className="thumbnail-image"
+                        />
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

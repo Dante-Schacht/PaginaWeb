@@ -125,17 +125,35 @@ export const mapProduct = (xanoProduct) => {
 
   // Procesar imágenes de Xano
   const processImages = (xanoImages) => {
+    console.log('🔍 processImages - Input:', xanoImages);
+    
     if (!xanoImages || !Array.isArray(xanoImages)) {
-      return ['/ImagenHome.png'];
+      console.log('❌ processImages - No es array o es null/undefined');
+      return null; // No hay imágenes, retornar null en lugar de imagen por defecto
     }
     
-    const images = xanoImages
-      .filter(img => img && img.path)
-      .map(img => img.path);
+    console.log('✅ processImages - Es array, procesando...');
     
-    return images.length > 0 ? images : ['/ImagenHome.png'];
+    const images = xanoImages
+      .filter(img => {
+        console.log('🔍 processImages - Filtrando imagen:', img);
+        return img && img.path && img.path.trim() !== '';
+      })
+      .map(img => {
+        console.log('🔍 processImages - Mapeando imagen:', img.path);
+        return img.path;
+      });
+    
+    console.log('✅ processImages - Imágenes válidas encontradas:', images);
+    return images.length > 0 ? images : null; // Retornar null si no hay imágenes válidas
   };
 
+  console.log('🔍 mapProduct - Procesando imágenes para:', xanoProduct.name);
+  console.log('🔍 mapProduct - xanoProduct.images:', xanoProduct.images);
+  
+  const processedImages = processImages(xanoProduct.images);
+  console.log('🔍 mapProduct - processedImages:', processedImages);
+  
   const mappedProduct = {
     id: xanoProduct.id,
     name: xanoProduct.name,
@@ -144,8 +162,8 @@ export const mapProduct = (xanoProduct) => {
     originalPrice: additionalData.originalPrice,
     category: categoryMap[xanoProduct.category] || xanoProduct.category,
     brand: xanoProduct.brand,
-    image: processImages(xanoProduct.images)[0] || '/ImagenHome.png',
-    additionalImages: processImages(xanoProduct.images),
+    image: processedImages?.[0] || null,
+    additionalImages: processedImages || [],
     stock: xanoProduct.stock || 0,
     isNew: additionalData.isNew,
     discount: additionalData.discount,
@@ -159,6 +177,9 @@ export const mapProduct = (xanoProduct) => {
     detailedDescription: additionalData.detailedDescription,
     shippingInfo: additionalData.shippingInfo
   };
+  
+  console.log('🔍 mapProduct - mappedProduct.image:', mappedProduct.image);
+  console.log('🔍 mapProduct - mappedProduct.additionalImages:', mappedProduct.additionalImages);
   
   console.log('mapProduct: Producto mapeado:', mappedProduct);
   return mappedProduct;

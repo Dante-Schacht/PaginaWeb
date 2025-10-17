@@ -37,14 +37,43 @@ const UserManager = () => {
         throw new Error('No hay token de autenticación');
       }
       
-      // Cargar usuarios desde Xano
-      const usersData = await xanoAPI.getUsers({}, token);
-      
-      if (usersData && Array.isArray(usersData)) {
-        setUsers(usersData);
-      } else {
+      // Cargar usuarios reales desde Xano
+      try {
+        console.log('Cargando usuarios desde Xano...');
+        const usersData = await xanoAPI.getUsers({}, token);
+        
+        console.log('Datos de usuarios recibidos:', usersData);
+        
+        if (usersData && Array.isArray(usersData)) {
+          setUsers(usersData);
+          setError(null);
+          console.log('Usuarios cargados exitosamente:', usersData.length);
+          return;
+        } else if (usersData && usersData.items && Array.isArray(usersData.items)) {
+          setUsers(usersData.items);
+          setError(null);
+          console.log('Usuarios cargados exitosamente (con paginación):', usersData.items.length);
+          return;
+        } else {
+          console.log('Formato de datos inesperado:', usersData);
+          setError('Formato de datos inesperado del servidor');
+          setUsers([]);
+          return;
+        }
+      } catch (apiError) {
+        console.error('Error al cargar usuarios desde Xano:', apiError);
+        
+        // Si es error 401, el token puede estar expirado
+        if (apiError.message.includes('401')) {
+          setError('Error de autenticación. Por favor, inicia sesión nuevamente.');
+        } else if (apiError.message.includes('404')) {
+          setError('Endpoint de usuarios no encontrado. Verifica la configuración de Xano.');
+        } else {
+          setError('Error al cargar usuarios: ' + apiError.message);
+        }
         setUsers([]);
       }
+      
     } catch (error) {
       console.error('Error loading users:', error);
       setError('Error al cargar usuarios: ' + error.message);
@@ -69,16 +98,28 @@ const UserManager = () => {
 
       if (editingUser) {
         // Actualizar usuario existente
-        await xanoAPI.updateUser(editingUser.id, formData, token);
-        setSuccess('Usuario actualizado correctamente');
+        try {
+          await xanoAPI.updateUser(editingUser.id, formData, token);
+          setSuccess('Usuario actualizado correctamente');
+        } catch (updateError) {
+          console.log('Endpoint de actualización no disponible:', updateError);
+          setError('Funcionalidad de actualización no disponible. El endpoint no está configurado en Xano.');
+          return;
+        }
       } else {
         // Crear nuevo usuario
-        const userData = {
-          ...formData,
-          password_confirmation: formData.password
-        };
-        await xanoAPI.createUser(userData, token);
-        setSuccess('Usuario creado correctamente');
+        try {
+          const userData = {
+            ...formData,
+            password_confirmation: formData.password
+          };
+          await xanoAPI.createUser(userData, token);
+          setSuccess('Usuario creado correctamente');
+        } catch (createError) {
+          console.log('Endpoint de creación no disponible:', createError);
+          setError('Funcionalidad de creación no disponible. El endpoint POST /user no está configurado en Xano.');
+          return;
+        }
       }
 
       // Recargar usuarios

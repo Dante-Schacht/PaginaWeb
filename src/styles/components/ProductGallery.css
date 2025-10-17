@@ -1,0 +1,24 @@
+.gallery .empty{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;aspect-ratio:1/1;background:#f7f7f8;border-radius:12px;
+  color:#6b7280;text-align:center;padding:16px;
+}
+
+.gallery .thumbs .btn {
+  padding: 4px;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.gallery .thumbs .btn:hover {
+  border-color: #6c757d;
+  transform: scale(1.05);
+}
+
+.gallery .thumbs .btn.btn-dark {
+  border-color: #212529;
+}
+
+.gallery .thumbs img {
+  border-radius: 6px;
+}

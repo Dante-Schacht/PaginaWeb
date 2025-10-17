@@ -35,7 +35,7 @@ const ProductCard = ({ product }) => {
           <div className="product-image-loading d-flex align-items-center justify-content-center">
             <Spinner animation="border" size="sm" />
           </div>
-        ) : (
+        ) : imageSrc ? (
           <Card.Img 
             variant="top" 
             src={imageSrc} 
@@ -43,6 +43,14 @@ const ProductCard = ({ product }) => {
             className="product-image"
             loading="lazy"
           />
+        ) : (
+          <div className="product-image-placeholder d-flex align-items-center justify-content-center">
+            <div className="placeholder-content text-center">
+              <i className="bi bi-image display-4 text-muted mb-2"></i>
+              <p className="text-muted small mb-0">Sin imagen</p>
+              <small className="text-muted">{product.name}</small>
+            </div>
+          </div>
         )}
         {product.discount && (
           <Badge bg="danger" className="discount-badge">
