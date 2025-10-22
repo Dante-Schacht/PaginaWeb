@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Button, Form, Modal, Alert, Badge, Table } from 'react-bootstrap';
 import { useApp } from '../../context/AppContext';
-import useXano from '../../hooks/useXano';
-import xanoAPI from '../../config/xano';
+import { getUsers, createUser, updateUser, deleteUser } from '../../lib/xanoEndpoints';
 
 const UserManager = () => {
   const { user } = useApp();
-  const xano = useXano();
   const [users, setUsers] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -31,52 +29,36 @@ const UserManager = () => {
       setLoading(true);
       setError(null);
       
-      // Obtener token del usuario actual
-      const token = localStorage.getItem('electroverse-token');
-      if (!token) {
-        throw new Error('No hay token de autenticación');
-      }
+      console.log('Cargando usuarios desde Xano...');
+      const usersData = await getUsers();
       
-      // Cargar usuarios reales desde Xano
-      try {
-        console.log('Cargando usuarios desde Xano...');
-        const usersData = await xanoAPI.getUsers({}, token);
-        
-        console.log('Datos de usuarios recibidos:', usersData);
-        
-        if (usersData && Array.isArray(usersData)) {
-          setUsers(usersData);
-          setError(null);
-          console.log('Usuarios cargados exitosamente:', usersData.length);
-          return;
-        } else if (usersData && usersData.items && Array.isArray(usersData.items)) {
-          setUsers(usersData.items);
-          setError(null);
-          console.log('Usuarios cargados exitosamente (con paginación):', usersData.items.length);
-          return;
-        } else {
-          console.log('Formato de datos inesperado:', usersData);
-          setError('Formato de datos inesperado del servidor');
-          setUsers([]);
-          return;
-        }
-      } catch (apiError) {
-        console.error('Error al cargar usuarios desde Xano:', apiError);
-        
-        // Si es error 401, el token puede estar expirado
-        if (apiError.message.includes('401')) {
-          setError('Error de autenticación. Por favor, inicia sesión nuevamente.');
-        } else if (apiError.message.includes('404')) {
-          setError('Endpoint de usuarios no encontrado. Verifica la configuración de Xano.');
-        } else {
-          setError('Error al cargar usuarios: ' + apiError.message);
-        }
+      console.log('Datos de usuarios recibidos:', usersData);
+      
+      if (usersData && Array.isArray(usersData)) {
+        setUsers(usersData);
+        setError(null);
+        console.log('Usuarios cargados exitosamente:', usersData.length);
+      } else if (usersData && usersData.items && Array.isArray(usersData.items)) {
+        setUsers(usersData.items);
+        setError(null);
+        console.log('Usuarios cargados exitosamente (con paginación):', usersData.items.length);
+      } else {
+        console.log('Formato de datos inesperado:', usersData);
+        setError('Formato de datos inesperado del servidor');
         setUsers([]);
       }
       
     } catch (error) {
       console.error('Error loading users:', error);
-      setError('Error al cargar usuarios: ' + error.message);
+      
+      // Si es error 401, el token puede estar expirado
+      if (error.message.includes('401')) {
+        setError('Error de autenticación. Por favor, inicia sesión nuevamente.');
+      } else if (error.message.includes('404')) {
+        setError('Endpoint de usuarios no encontrado. Verifica la configuración de Xano.');
+      } else {
+        setError('Error al cargar usuarios: ' + error.message);
+      }
       setUsers([]);
     } finally {
       setLoading(false);
@@ -89,37 +71,73 @@ const UserManager = () => {
     setError(null);
     setSuccess(null);
 
+    // Validar email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Por favor, ingresa un email válido (ejemplo: usuario@dominio.com)');
+      setLoading(false);
+      return;
+    }
+
+    // Validar que los campos requeridos estén llenos
+    if (!formData.first_name.trim() || !formData.last_name.trim()) {
+      setError('Por favor, completa todos los campos requeridos');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Obtener token del usuario actual
+      // Verificar que el usuario esté autenticado
       const token = localStorage.getItem('electroverse-token');
+      console.log('🔍 Token encontrado:', token ? 'Sí' : 'No');
+      console.log('🔍 Token completo:', token);
+      
       if (!token) {
-        throw new Error('No hay token de autenticación');
+        setError('No estás autenticado. Por favor, inicia sesión nuevamente.');
+        setLoading(false);
+        return;
+      }
+
+      // Verificar que el usuario sea admin
+      if (!user || user.role !== 'admin') {
+        setError('No tienes permisos para crear usuarios. Solo los administradores pueden realizar esta acción.');
+        setLoading(false);
+        return;
       }
 
       if (editingUser) {
         // Actualizar usuario existente
-        try {
-          await xanoAPI.updateUser(editingUser.id, formData, token);
-          setSuccess('Usuario actualizado correctamente');
-        } catch (updateError) {
-          console.log('Endpoint de actualización no disponible:', updateError);
-          setError('Funcionalidad de actualización no disponible. El endpoint no está configurado en Xano.');
-          return;
+        const updateData = {
+          name: `${formData.first_name} ${formData.last_name}`.trim(),
+          email: formData.email,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          role: formData.role,
+          status: formData.is_active ? 'active' : 'inactive'
+        };
+        
+        // Si se proporciona nueva contraseña, incluirla
+        if (formData.password) {
+          updateData.password = formData.password;
+          updateData.password_confirmation = formData.password;
         }
+        
+        await updateUser(editingUser.id, updateData);
+        setSuccess('Usuario actualizado correctamente');
       } else {
         // Crear nuevo usuario
-        try {
-          const userData = {
-            ...formData,
-            password_confirmation: formData.password
-          };
-          await xanoAPI.createUser(userData, token);
-          setSuccess('Usuario creado correctamente');
-        } catch (createError) {
-          console.log('Endpoint de creación no disponible:', createError);
-          setError('Funcionalidad de creación no disponible. El endpoint POST /user no está configurado en Xano.');
-          return;
-        }
+        const userData = {
+          name: `${formData.first_name} ${formData.last_name}`.trim(),
+          email: formData.email,
+          password: formData.password,
+          password_confirmation: formData.password,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          role: formData.role,
+          status: formData.is_active ? 'active' : 'inactive'
+        };
+        await createUser(userData);
+        setSuccess('Usuario creado correctamente');
       }
 
       // Recargar usuarios
@@ -163,14 +181,7 @@ const UserManager = () => {
         setLoading(true);
         setError(null);
         
-        // Obtener token del usuario actual
-        const token = localStorage.getItem('electroverse-token');
-        if (!token) {
-          throw new Error('No hay token de autenticación');
-        }
-        
-        // Eliminar usuario desde Xano
-        await xanoAPI.deleteUser(userId, token);
+        await deleteUser(userId);
         setSuccess('Usuario eliminado correctamente');
         await loadUsers();
       } catch (error) {
@@ -350,8 +361,12 @@ const UserManager = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
+                placeholder="ejemplo@dominio.com"
                 required
               />
+              <Form.Text className="text-muted">
+                Ingresa un email válido con formato usuario@dominio.com
+              </Form.Text>
             </Form.Group>
 
             <Form.Group className="mb-3">

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Button, Form, Modal, Alert, Badge, Table } from 'react-bootstrap';
 import { useApp } from '../../context/AppContext';
 import useXano from '../../hooks/useXano';
-import { uploadImages } from '../../config/xano';
+import { uploadImages } from '../../lib/xanoEndpoints';
 
 const ProductManager = () => {
   const { products, setProducts, productsLoaded } = useApp();

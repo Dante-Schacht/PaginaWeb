@@ -689,22 +689,6 @@ export function sanitizeCreateProductPayload(input = {}) {
   return out;
 }
 
-// Función para procesar múltiples imágenes (simular upload)
-export async function uploadImages(files) {
-  if (!files?.length) throw new Error("No files selected");
-  
-  // Simular procesamiento de imágenes creando objetos con la estructura esperada
-  const uploaded = files.map((file, index) => ({
-    name: file.name || `image_${index + 1}.jpg`,
-    path: URL.createObjectURL(file), // Usar URL local temporal
-    type: file.type || "image/jpeg",
-    size: file.size || 1024,
-    mime: file.type || "image/jpeg",
-    meta: {}
-  }));
-
-  return uploaded;
-}
 
 // Crear instancia de la API
 const xanoAPI = new XanoAPI();

@@ -54,8 +54,8 @@ export async function deleteProduct(id) {
 export async function uploadImages(filesOrFileList) {
   const formData = new FormData();
   const files = Array.from(filesOrFileList);
-  for (const f of files) formData.append("file", f);
-  const res = await api.post("/uploads", formData, {
+  for (const f of files) formData.append("content", f);
+  const res = await api.post("/upload/image", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return res.data; // array de objetos de archivo
