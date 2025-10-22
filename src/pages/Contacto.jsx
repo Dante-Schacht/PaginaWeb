@@ -46,13 +46,13 @@ const Contacto = () => {
     {
       icon: 'bi-geo-alt',
       title: 'Dirección',
-      content: 'Av. Principal 123, Ciudad, País',
+      content: 'Calle Tecnológica 456, Distrito Digital, TechCity',
       description: 'Visítanos en nuestra tienda física'
     },
     {
       icon: 'bi-telephone',
       title: 'Teléfono',
-      content: '+1 (555) 123-4567',
+      content: '+52 (55) 1234-5678',
       description: 'Lun - Vie: 9:00 - 18:00'
     },
     {

@@ -47,7 +47,7 @@ const Blogs = () => {
           id: 4,
           title: 'Micrófonos para Streaming: Guía 2024',
           excerpt: 'Los mejores micrófonos para streamers y content creators.',
-          image: 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=800&h=600&fit=crop&crop=center',
+          image: 'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=800&h=600&fit=crop&crop=center',
           author: 'Content Creator',
           date: '2024-01-08',
           readTime: '8 min',

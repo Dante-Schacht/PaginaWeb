@@ -58,11 +58,11 @@ const Footer = () => {
             <div className="contact-info">
               <div className="contact-item">
                 <i className="bi bi-geo-alt"></i>
-                <span>Av. Principal 123, Ciudad</span>
+                <span>Calle Tecnológica 456, Distrito Digital</span>
               </div>
               <div className="contact-item">
                 <i className="bi bi-telephone"></i>
-                <span>+1 (555) 123-4567</span>
+                <span>+52 (55) 1234-5678</span>
               </div>
               <div className="contact-item">
                 <i className="bi bi-envelope"></i>
