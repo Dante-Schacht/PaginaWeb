@@ -48,8 +48,8 @@ const RegisterForm = () => {
     
     if (!formData.password) {
       newErrors.password = 'La contraseña es requerida';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
     }
     
     if (!formData.confirmPassword) {
@@ -131,7 +131,7 @@ const RegisterForm = () => {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres"
               isInvalid={!!errors.password}
               disabled={loading}
             />

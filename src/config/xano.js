@@ -153,7 +153,13 @@ class XanoAPI {
       console.error('Xano Auth API Error:', error);
       
       if (error.response) {
-        throw new Error(`HTTP ${error.response.status} ${error.response.statusText}: ${JSON.stringify(error.response.data)}`);
+        // Extraer mensaje de error más específico de Xano
+        const errorData = error.response.data;
+        if (errorData && errorData.message) {
+          throw new Error(`HTTP ${error.response.status}: ${errorData.message}`);
+        } else {
+          throw new Error(`HTTP ${error.response.status} ${error.response.statusText}: ${JSON.stringify(errorData)}`);
+        }
       } else {
         throw new Error(`Network error: ${error.message}`);
       }

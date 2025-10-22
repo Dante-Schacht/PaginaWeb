@@ -1,0 +1,37 @@
+/* Profile Page Styles */
+.profile-page {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.profile-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.profile-title {
+  color: #9C2007;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.profile-subtitle {
+  color: #6c757d;
+  font-size: 1.1rem;
+  margin-bottom: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .profile-header {
+    margin-bottom: 1.5rem;
+  }
+  
+  .profile-title {
+    font-size: 1.8rem;
+  }
+  
+  .profile-subtitle {
+    font-size: 1rem;
+  }
+}

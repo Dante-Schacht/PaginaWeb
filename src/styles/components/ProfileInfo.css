@@ -1,0 +1,148 @@
+/* Profile Info Component Styles */
+.profile-info {
+  margin-bottom: 2rem;
+}
+
+.profile-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile-tabs .btn {
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.profile-tabs .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.profile-tabs .btn-primary {
+  background: linear-gradient(135deg, #9C2007 0%, #701705 100%);
+  border: none;
+}
+
+.profile-tabs .btn-outline-primary {
+  border-color: #9C2007;
+  color: #9C2007;
+}
+
+.profile-tabs .btn-outline-primary:hover {
+  background: #9C2007;
+  border-color: #9C2007;
+  color: white;
+}
+
+/* Card styles */
+.profile-info .card {
+  border: none;
+  border-radius: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.profile-info .card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.profile-info .card-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 2px solid #9C2007;
+  border-radius: 1rem 1rem 0 0 !important;
+}
+
+.profile-info .card-header h5 {
+  color: #9C2007;
+  font-weight: 600;
+  margin: 0;
+}
+
+.profile-info .card-body {
+  padding: 2rem;
+}
+
+/* Form styles */
+.profile-info .form-label {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.profile-info .form-control {
+  border-radius: 0.5rem;
+  border: 2px solid #e9ecef;
+  padding: 0.75rem 1rem;
+  transition: all 0.3s ease;
+}
+
+.profile-info .form-control:focus {
+  border-color: #9C2007;
+  box-shadow: 0 0 0 0.2rem rgba(156, 32, 7, 0.25);
+}
+
+.profile-info .form-control:disabled {
+  background-color: #f8f9fa;
+  opacity: 0.7;
+}
+
+/* Button styles */
+.profile-info .btn-primary {
+  background: linear-gradient(135deg, #9C2007 0%, #701705 100%);
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.profile-info .btn-primary:hover {
+  background: linear-gradient(135deg, #701705 0%, #440E03 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(156, 32, 7, 0.3);
+}
+
+.profile-info .btn-primary:disabled {
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Alert styles */
+.profile-info .alert {
+  border-radius: 0.75rem;
+  border: none;
+  font-weight: 500;
+}
+
+.profile-info .alert-success {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  color: #155724;
+}
+
+.profile-info .alert-danger {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  color: #721c24;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .profile-tabs {
+    flex-direction: column;
+  }
+  
+  .profile-tabs .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  .profile-info .card-body {
+    padding: 1.5rem;
+  }
+  
+  .profile-info .btn-primary {
+    width: 100%;
+  }
+}

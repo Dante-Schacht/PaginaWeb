@@ -14,6 +14,7 @@ import Nosotros from './pages/Nosotros';
 import Contacto from './pages/Contacto';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Profile from './pages/Profile';
 import Admin from './pages/Admin';
 import './styles/global/App.css';
 
@@ -36,6 +37,7 @@ function App() {
               <Route path="/contacto" element={<Contacto />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="/admin" element={<Admin />} />
             </Routes>
           </ErrorBoundary>

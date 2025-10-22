@@ -119,7 +119,7 @@ class AuthService {
           createdAt: response.created_at
         };
         
-        console.log('🔍 getProfileFromXano - Mapped user:', user);
+        console.log('🔍 getProfileFromXano - Mapped user from Xano:', user);
         
         return {
           success: true,
@@ -202,7 +202,9 @@ class AuthService {
   // Registro con Xano
   async register(userData) {
     try {
+      console.log('🔍 AuthService - Starting register with data:', userData);
       const response = await xanoAPI.register(userData);
+      console.log('🔍 AuthService - Xano register response:', response);
       
       // Xano devuelve directamente el token
       if (response.authToken) {
@@ -224,12 +226,13 @@ class AuthService {
             message: 'Registro exitoso'
           };
         } else {
+          console.log('⚠️ No se pudo obtener perfil de Xano, creando usuario básico');
           // Si no se puede obtener el perfil, crear usuario básico
           const user = {
             id: Date.now(),
-            name: `${userData.first_name} ${userData.last_name}`.trim(),
-            firstName: userData.first_name,
-            lastName: userData.last_name,
+            name: userData.first_name || userData.email.split('@')[0],
+            firstName: userData.first_name || '',
+            lastName: userData.last_name || '',
             email: userData.email,
             role: this.determineUserRole(userData.email),
             isActive: true
@@ -251,6 +254,18 @@ class AuthService {
       }
     } catch (error) {
       console.error('Register error:', error);
+      
+      // Manejar errores específicos de Xano
+      if (error.message && error.message.includes('ERROR_CODE_INPUT_ERROR')) {
+        const errorMatch = error.message.match(/"message":"([^"]+)"/);
+        if (errorMatch) {
+          return {
+            success: false,
+            error: errorMatch[1]
+          };
+        }
+      }
+      
       return {
         success: false,
         error: 'Error de conexión. Intenta nuevamente.'
