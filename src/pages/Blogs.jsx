@@ -3,10 +3,24 @@ import { Container, Row, Col, Card, Button, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/pages/Blogs.css';
+import { PLACEHOLDER_IMAGE } from '../lib/resolveImage';
 
 const Blogs = () => {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Mapea el título del blog al nombre de imagen en /public/img
+  const getBlogImageForTitle = (title) => {
+    const t = (title || '').toLowerCase();
+    if (t.includes('mouse')) return '/img/mouses.png';
+    if (t.includes('teclado')) return '/img/teclados.png';
+    if (t.includes('monitor')) return '/img/monitores.png';
+    if (t.includes('micrófono') || t.includes('microfono')) return '/img/microfonos.png';
+    if (t.includes('smartwatch') || t.includes('wearable')) return '/img/smartwatches.png';
+    // actualizar: imagen específica para audífonos
+    if (t.includes('audífono') || t.includes('audifono') || t.includes('auricular') || t.includes('headset')) return '/img/audifonosInalambricos.jpg';
+    return PLACEHOLDER_IMAGE;
+  };
 
   useEffect(() => {
     // Simular carga de blogs
@@ -16,7 +30,7 @@ const Blogs = () => {
           id: 1,
           title: 'Guía Completa de Mouses Gaming 2024',
           excerpt: 'Descubre los mejores mouses gaming del mercado y cómo elegir el perfecto para tu setup.',
-          image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=800&h=600&fit=crop&crop=center',
+          image: getBlogImageForTitle('Guía Completa de Mouses Gaming 2024'),
           author: 'ElectroVerse Team',
           date: '2024-01-15',
           readTime: '5 min',
@@ -27,7 +41,7 @@ const Blogs = () => {
           id: 2,
           title: 'Teclados Mecánicos: Todo lo que Necesitas Saber',
           excerpt: 'Una guía completa sobre switches, tipos de teclados mecánicos y recomendaciones.',
-          image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&h=600&fit=crop&crop=center',
+          image: getBlogImageForTitle('Teclados Mecánicos: Todo lo que Necesitas Saber'),
           author: 'Tech Expert',
           date: '2024-01-12',
           readTime: '7 min',
@@ -37,7 +51,7 @@ const Blogs = () => {
           id: 3,
           title: 'Configuración de Monitor para Gaming',
           excerpt: 'Optimiza tu experiencia gaming con la configuración perfecta de monitores.',
-          image: 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=800&h=600&fit=crop&crop=center',
+          image: getBlogImageForTitle('Configuración de Monitor para Gaming'),
           author: 'Gaming Pro',
           date: '2024-01-10',
           readTime: '6 min',
@@ -47,7 +61,7 @@ const Blogs = () => {
           id: 4,
           title: 'Micrófonos para Streaming: Guía 2024',
           excerpt: 'Los mejores micrófonos para streamers y content creators.',
-          image: 'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=800&h=600&fit=crop&crop=center',
+          image: getBlogImageForTitle('Micrófonos para Streaming: Guía 2024'),
           author: 'Content Creator',
           date: '2024-01-08',
           readTime: '8 min',
@@ -57,7 +71,7 @@ const Blogs = () => {
           id: 5,
           title: 'Audífonos Gaming: Inalámbricos vs Cableados',
           excerpt: 'Comparativa detallada entre audífonos gaming inalámbricos y cableados.',
-          image: 'https://images.unsplash.com/photo-1599669454699-248893623440?w=800&h=600&fit=crop&crop=center',
+          image: getBlogImageForTitle('Audífonos Gaming: Inalámbricos vs Cableados'),
           author: 'Audio Expert',
           date: '2024-01-05',
           readTime: '6 min',
@@ -67,7 +81,7 @@ const Blogs = () => {
           id: 6,
           title: 'Smartwatches para Deportistas',
           excerpt: 'Los mejores smartwatches para monitorear tu actividad física.',
-          image: 'https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?w=800&h=600&fit=crop&crop=center',
+          image: getBlogImageForTitle('Smartwatches para Deportistas'),
           author: 'Fitness Tech',
           date: '2024-01-03',
           readTime: '5 min',
@@ -122,6 +136,7 @@ const Blogs = () => {
                             alt={featuredBlog.title}
                             className="img-fluid h-100"
                             style={{ objectFit: 'cover' }}
+                            onError={(e) => { e.currentTarget.src = PLACEHOLDER_IMAGE; }}
                           />
                         </div>
                       </Col>
@@ -147,7 +162,7 @@ const Blogs = () => {
                               <i className="bi bi-clock"></i> {featuredBlog.readTime}
                             </span>
                           </div>
-                          <Button variant="primary" size="lg">
+                          <Button variant="primary" size="lg" as={Link} to={`/blogs/${featuredBlog.id}`}>
                             Leer Más
                           </Button>
                         </Card.Body>
@@ -175,6 +190,7 @@ const Blogs = () => {
                         src={blog.image} 
                         alt={blog.title}
                         className="blog-image"
+                        onError={(e) => { e.currentTarget.src = PLACEHOLDER_IMAGE; }}
                       />
                       <Badge bg="secondary" className="blog-category-badge">
                         {blog.category}
@@ -198,7 +214,7 @@ const Blogs = () => {
                           <i className="bi bi-clock"></i> {blog.readTime}
                         </span>
                       </div>
-                      <Button variant="outline-primary" className="mt-auto">
+                      <Button variant="outline-primary" className="mt-auto" as={Link} to={`/blogs/${blog.id}`}>
                         Leer Más
                       </Button>
                     </Card.Body>

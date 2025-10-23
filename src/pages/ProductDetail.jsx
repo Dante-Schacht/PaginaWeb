@@ -7,7 +7,7 @@ import ProductCard from '../components/ProductCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import useImageLoader from '../hooks/useImageLoader';
 import { formatPrice, calculateDiscount } from '../utils/dataAdapter';
-import { resolveImageUrl } from '../lib/resolveImage';
+import { resolveImageUrl, PLACEHOLDER_IMAGE } from '../lib/resolveImage';
 import '../styles/pages/ProductDetail.css';
 
 const ProductDetail = () => {
@@ -21,71 +21,82 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [showDetails, setShowDetails] = useState(false);
-  
+
+  useEffect(() => {
+    console.log('[ProductDetail] montado con id:', id);
+    return () => {
+      console.log('[ProductDetail] desmontado, id:', id);
+    };
+  }, [id]);
+
   // Usar la imagen seleccionada del carrusel en lugar de la imagen principal
   const currentImageSrcRaw = product?.additionalImages?.[selectedImageIndex] || product?.image;
   const currentImageSrcResolved = resolveImageUrl(currentImageSrcRaw);
   const { imageSrc, isLoading } = useImageLoader(currentImageSrcResolved);
 
   useEffect(() => {
+    console.log('[ProductDetail] useEffect for data load, id:', id);
+
+    const controller = new AbortController();
+    let cancelled = false;
+
     const loadProduct = async () => {
       try {
         setLoading(true);
-        
-        // Validar que el ID sea válido
-        if (!id || isNaN(parseInt(id))) {
-          setProduct(null);
-          setLoading(false);
-          return;
-        }
-        
-        // Buscar en productos ya cargados del contexto
-        const foundProduct = products.find(p => p.id === parseInt(id));
-        
-        if (foundProduct) {
-          setProduct(foundProduct);
-          
-          // Obtener productos recomendados de la misma categoría
-          const recommended = products
-            .filter(p => p.category === foundProduct.category && p.id !== parseInt(id))
+
+        // Intentar obtener del contexto primero
+        const fromContext = products.find((p) => String(p.id) === String(id));
+        if (fromContext) {
+          console.log('[ProductDetail] Found product in context:', fromContext);
+          if (cancelled) return;
+          setProduct(fromContext);
+
+          // Obtener recomendados por categoría
+          const recommendations = products
+            .filter((p) => p.category === fromContext.category && p.id !== fromContext.id)
             .slice(0, 4);
-          setRecommendedProducts(recommended);
+          if (cancelled) return;
+          setRecommendedProducts(recommendations);
         } else {
-          // Fallback: cargar desde Xano por ID
-          try {
-            console.log('ProductDetail: producto no está en contexto, cargando por ID desde Xano');
-            const xanoProduct = await xano.getProductById(parseInt(id));
-            if (xanoProduct) {
-              setProduct(xanoProduct);
-              const recommended = products
-                .filter(p => p.category === xanoProduct.category && p.id !== parseInt(id))
-                .slice(0, 4);
-              setRecommendedProducts(recommended);
-            } else {
-              setProduct(null);
-            }
-          } catch (fetchErr) {
-            console.error('ProductDetail: error cargando producto por ID desde Xano', fetchErr);
-            setProduct(null);
+          console.log('[ProductDetail] Product not in context, fetching from Xano for id:', id);
+          const fetched = await xano.getProductById(id, { signal: controller.signal });
+          if (cancelled) return;
+          console.log('[ProductDetail] Fetched product from Xano:', fetched);
+          setProduct(fetched);
+
+          // Para recomendados, necesitaríamos la categoría del producto obtenido
+          if (fetched && fetched.category) {
+            const recommendations = products
+              .filter((p) => p.category === fetched.category && p.id !== fetched.id)
+              .slice(0, 4);
+            if (cancelled) return;
+            setRecommendedProducts(recommendations);
+          } else {
+            setRecommendedProducts([]);
           }
         }
-        
       } catch (error) {
-        console.error('Error loading product:', error);
-        setProduct(null);
+        if (error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError') {
+          console.debug('[ProductDetail] petición cancelada');
+        } else {
+          console.error('[ProductDetail] Error loading product:', error);
+          setProduct(null);
+          setRecommendedProducts([]);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
-    // Solo cargar si tenemos un ID válido
     if (id) {
       loadProduct();
-    } else {
-      setLoading(false);
-      setProduct(null);
     }
-  }, [id, products, xano]);
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [id, products]);
 
   const handleAddToCart = () => {
     try {
@@ -274,7 +285,7 @@ const ProductDetail = () => {
                               src: e.currentTarget?.src,
                               index
                             });
-                            e.currentTarget.src = '/ImagenHome.png';
+                            e.currentTarget.src = PLACEHOLDER_IMAGE;
                           }}
                         />
                       </button>

@@ -37,9 +37,31 @@
   background: white;
 }
 
+/* Ajuste: centrar imagen destacada y evitar que quede pegada al borde */
 .featured-blog-image {
-  height: 300px;
+  height: 320px;
+  padding: 16px; /* espacio interno para separar del marco */
   overflow: hidden;
+  display: flex;
+  align-items: center; /* centra verticalmente */
+  justify-content: center; /* centra horizontalmente */
+  margin-top: 28px; /* bajar ligeramente para alinear con el título */
+}
+
+/* ajuste responsivo: reducir el desplazamiento en pantallas medianas/pequeñas */
+@media (max-width: 992px) {
+  .featured-blog-image {
+    margin-top: 18px;
+  }
+}
+
+.featured-blog-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* llena el contenedor manteniendo proporción */
+  object-position: center; /* centra el foco de la imagen */
+  border-radius: 12px; /* esquinas redondeadas para no pegarse al borde */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 .featured-blog-content {
@@ -81,8 +103,12 @@
 
 .blog-image-container {
   position: relative;
-  height: 200px;
+  height: 220px; /* +20px para compensar el padding */
+  padding: 12px; /* separación del marco en tarjetas */
   overflow: hidden;
+  display: flex;
+  align-items: center; /* centra verticalmente */
+  justify-content: center; /* centra horizontalmente */
 }
 
 .blog-image {
@@ -90,8 +116,16 @@
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
+  border-radius: 12px; /* consistente con imagen destacada */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
+@media (max-width: 768px) {
+  .blog-image-container {
+    height: 200px; /* ajustar en móviles */
+    padding: 10px;
+  }
+}
 .blog-card:hover .blog-image {
   transform: scale(1.05);
 }

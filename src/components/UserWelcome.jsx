@@ -3,19 +3,24 @@ import { Alert } from 'react-bootstrap';
 import { useApp } from '../context/AppContext';
 
 const UserWelcome = () => {
-  const { user } = useApp();
+  const { user, justLoggedIn, dismissWelcome } = useApp();
   const [isVisible, setIsVisible] = useState(true);
   const [isFading, setIsFading] = useState(false);
 
   useEffect(() => {
+    // Solo iniciar timers si es un login reciente
+    if (!user || !justLoggedIn) return;
+
     // Iniciar desvanecimiento después de 5 segundos
     const fadeTimer = setTimeout(() => {
       setIsFading(true);
     }, 5000);
 
-    // Ocultar completamente después del desvanecimiento
+    // Ocultar completamente después del desvanecimiento y limpiar flag
     const hideTimer = setTimeout(() => {
       setIsVisible(false);
+      // Limpiar el flag para no volver a mostrar en visitas futuras
+      dismissWelcome();
     }, 5500); // 500ms para la animación de desvanecimiento
 
     // Limpiar los timers si el componente se desmonta
@@ -23,9 +28,9 @@ const UserWelcome = () => {
       clearTimeout(fadeTimer);
       clearTimeout(hideTimer);
     };
-  }, []);
+  }, [user, justLoggedIn, dismissWelcome]);
 
-  if (!user || !isVisible) return null;
+  if (!user || !justLoggedIn || !isVisible) return null;
 
   return (
     <Alert 

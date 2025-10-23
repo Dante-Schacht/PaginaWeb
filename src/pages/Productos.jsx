@@ -18,18 +18,26 @@ const Productos = () => {
 
   useEffect(() => {
     // Cargar productos desde Xano
+    const controller = new AbortController();
+    let cancelled = false;
+
     const loadProducts = async () => {
       try {
         setLoading(true);
         console.log('Productos.jsx: Cargando productos...');
-        const productsData = await xano.getProducts();
+        const productsData = await xano.getProducts({}, { signal: controller.signal });
+        if (cancelled) return;
         console.log('Productos.jsx: Productos cargados:', productsData);
         setProducts(productsData);
       } catch (error) {
-        console.error('Productos.jsx: Error loading products from Xano:', error);
-        setProducts([]);
+        if (error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError') {
+          console.debug('Productos.jsx: petición cancelada');
+        } else {
+          console.error('Productos.jsx: Error loading products from Xano:', error);
+          setProducts([]);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
@@ -37,7 +45,12 @@ const Productos = () => {
     if (!productsLoaded) {
       loadProducts();
     }
-  }, [setLoading, setProducts, xano, productsLoaded]);
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [productsLoaded]);
 
 
   // Leer parámetros de la URL y aplicar filtro automáticamente

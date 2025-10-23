@@ -109,20 +109,32 @@ class XanoAPI {
       const response = await axios(axiosConfig);
       return response.data;
     } catch (error) {
-      console.error('Xano API Error Details:', {
+      // Manejar cancelaciones sin ruido
+      if (axios.isCancel?.(error) || error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError') {
+        console.debug('Xano request canceled:', { method: axiosConfig.method, url });
+        throw error; // Propagar cancelación para que el llamador la pueda ignorar
+      }
+
+      const status = error.response?.status;
+      const is404 = status === 404;
+      const logFn = is404 ? console.warn : console.error;
+      logFn('Xano API Error Details:', {
         method: axiosConfig.method,
         url: url,
-        status: error.response?.status,
+        status,
         statusText: error.response?.statusText,
         responseBody: error.response?.data,
         requestPayload: axiosConfig.data
       });
       
       if (error.response) {
-        throw new Error(
-          `HTTP ${error.response.status} ${error.response.statusText} ${axiosConfig.method} ${url}\n` +
-          `Response: ${JSON.stringify(error.response.data)}`
-        );
+        // Extraer mensaje de error más específico de Xano
+        const errorData = error.response.data;
+        if (errorData && errorData.message) {
+          throw new Error(`HTTP ${status}: ${errorData.message}`);
+        } else {
+          throw new Error(`HTTP ${status} ${error.response?.statusText || ''}: ${JSON.stringify(errorData)}`);
+        }
       } else {
         throw new Error(`Network error: ${error.message}`);
       }
@@ -170,29 +182,28 @@ class XanoAPI {
   }
 
   // Métodos para productos
-  async getProducts(params = {}) {
+  async getProducts(params = {}, options = {}) {
     const queryString = new URLSearchParams(params).toString();
     const primary = queryString ? 
       `${this.config.ENDPOINTS.PRODUCTS}?${queryString}` : 
       this.config.ENDPOINTS.PRODUCTS;
     try {
-      return await this.request(primary);
+      return await this.request(primary, options);
     } catch (error) {
       console.warn('getProducts: fallback a /product por error:', error.message);
       const fallback = queryString ? 
         `${this.config.ENDPOINTS.PRODUCTS_FALLBACK}?${queryString}` : 
         this.config.ENDPOINTS.PRODUCTS_FALLBACK;
-      return this.request(fallback);
+      return this.request(fallback, options);
     }
   }
 
-  async getProductById(id) {
-    const primary = this.request(this.config.ENDPOINTS.PRODUCT_BY_ID(id));
+  async getProductById(id, options = {}) {
     try {
-      return await primary;
+      return await this.request(this.config.ENDPOINTS.PRODUCT_BY_ID(id), options);
     } catch (error) {
       console.warn('getProductById: fallback a /product/:id por error:', error.message);
-      return this.request(this.config.ENDPOINTS.PRODUCT_FALLBACK_BY_ID(id));
+      return this.request(this.config.ENDPOINTS.PRODUCT_FALLBACK_BY_ID(id), options);
     }
   }
 

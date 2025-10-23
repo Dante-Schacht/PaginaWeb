@@ -1,6 +1,8 @@
 // src/lib/resolveImage.js
 import { api } from "./xano";
 
+export const PLACEHOLDER_IMAGE = import.meta.env.VITE_PLACEHOLDER_IMAGE_URL || "/ImagenHome.png";
+
 export function getXanoOrigin() {
   // Usa .env si está, sino cae al baseURL del axios api
   const base = import.meta.env.VITE_XANO_BASE_URL || api?.defaults?.baseURL || "";
@@ -10,7 +12,7 @@ export function getXanoOrigin() {
 export function resolveImageUrl(img) {
   if (!img) {
     console.warn('resolveImageUrl: img vacío o nulo', img);
-    return "";
+    return PLACEHOLDER_IMAGE;
   }
   const origin = getXanoOrigin();
   let url = "";
@@ -27,7 +29,8 @@ export function resolveImageUrl(img) {
   }
 
   if (!url) {
-    console.warn('resolveImageUrl: no se pudo resolver URL', { img, origin });
+    console.warn('resolveImageUrl: no se pudo resolver URL, usando placeholder', { img, origin });
+    return PLACEHOLDER_IMAGE;
   } else {
     console.debug('resolveImageUrl: resuelta', { input: img, resolved: url, origin });
   }

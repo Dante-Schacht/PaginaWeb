@@ -6,8 +6,7 @@ import useXano from '../hooks/useXano';
 import ProductCard from '../components/ProductCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import UserWelcome from '../components/UserWelcome';
-import XanoTest from '../components/XanoTest';
-import XanoAuthTest from '../components/XanoAuthTest';
+// (removido) componentes de prueba de Xano para producción
 import '../styles/pages/Home.css';
 
 const Home = () => {
@@ -25,8 +24,8 @@ const Home = () => {
         const productsData = await xano.getProducts();
         
         if (productsData && productsData.length > 0) {
-          // Tomar solo los primeros 6 productos
-          const featured = productsData.slice(0, 6);
+          // Mostrar solo activos y limitar a 6
+          const featured = productsData.filter(p => p.active).slice(0, 6);
           setFeaturedProducts(featured);
           
           // Sincronizar todos los productos con el contexto
@@ -46,8 +45,8 @@ const Home = () => {
     if (!productsLoaded) {
       loadFeaturedProducts();
     } else {
-      // Usar productos ya cargados
-      const featured = products.slice(0, 6);
+      // Usar productos ya cargados: solo activos y máximo 6
+      const featured = products.filter(p => p.active).slice(0, 6);
       setFeaturedProducts(featured);
     }
   }, []); // Dependencias vacías para evitar bucles infinitos
@@ -241,21 +240,7 @@ const Home = () => {
         </Container>
       </section>
 
-      {/* Componente de prueba de Xano - Solo en desarrollo */}
-      {import.meta.env.DEV && (
-        <>
-          <section className="py-5 bg-light">
-            <Container>
-              <XanoTest />
-            </Container>
-          </section>
-          <section className="py-5">
-            <Container>
-              <XanoAuthTest />
-            </Container>
-          </section>
-        </>
-      )}
+      {/* componentes de prueba removidos del Home */}
     </div>
   );
 };

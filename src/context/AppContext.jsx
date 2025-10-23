@@ -19,7 +19,9 @@ const initialState = {
     { id: 7, name: 'Teléfono', slug: 'telefono' },
     { id: 8, name: 'Audífono', slug: 'audifono' },
     { id: 9, name: 'Smartwatch', slug: 'smartwatch' }
-  ]
+  ],
+  // Nuevo flag: se activa solo inmediatamente después de iniciar sesión
+  justLoggedIn: false
 };
 
 // Tipos de acciones
@@ -35,7 +37,9 @@ const ACTIONS = {
   SET_USER: 'SET_USER',
   LOGIN: 'LOGIN',
   LOGOUT: 'LOGOUT',
-  REGISTER: 'REGISTER'
+  REGISTER: 'REGISTER',
+  // Acción para controlar el aviso de bienvenida
+  SET_JUST_LOGGED_IN: 'SET_JUST_LOGGED_IN'
 };
 
 // Reducer
@@ -97,10 +101,13 @@ const appReducer = (state, action) => {
       return { ...state, user: action.payload, loading: false };
     
     case ACTIONS.LOGOUT:
-      return { ...state, user: null, cart: [] };
+      return { ...state, user: null, cart: [], justLoggedIn: false };
     
     case ACTIONS.REGISTER:
       return { ...state, user: action.payload, loading: false };
+    
+    case ACTIONS.SET_JUST_LOGGED_IN:
+      return { ...state, justLoggedIn: action.payload };
     
     default:
       return state;
@@ -159,6 +166,8 @@ export const AppProvider = ({ children }) => {
       if (result.success) {
         console.log('🔍 AppContext - Dispatching LOGIN with user:', result.user);
         dispatch({ type: ACTIONS.LOGIN, payload: result.user });
+        // Activar el flag para mostrar el aviso solo una vez
+        dispatch({ type: ACTIONS.SET_JUST_LOGGED_IN, payload: true });
         return { success: true };
       } else {
         dispatch({ type: ACTIONS.SET_ERROR, payload: result.error });
@@ -207,7 +216,13 @@ export const AppProvider = ({ children }) => {
       console.error('Logout error:', error);
     } finally {
       dispatch({ type: ACTIONS.LOGOUT });
+      dispatch({ type: ACTIONS.SET_JUST_LOGGED_IN, payload: false });
     }
+  }, []);
+
+  // Función para descartar el aviso de bienvenida
+  const dismissWelcome = useCallback(() => {
+    dispatch({ type: ACTIONS.SET_JUST_LOGGED_IN, payload: false });
   }, []);
 
   // Funciones adicionales de autenticación
@@ -332,6 +347,7 @@ export const AppProvider = ({ children }) => {
     login,
     register,
     logout,
+    dismissWelcome,
     updateProfile,
     changePassword,
     forgotPassword,
@@ -353,6 +369,7 @@ export const AppProvider = ({ children }) => {
     login,
     register,
     logout,
+    dismissWelcome,
     updateProfile,
     changePassword,
     forgotPassword,
