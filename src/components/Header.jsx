@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Navbar, Nav, Container, Badge, Offcanvas, Dropdown } from 'react-bootstrap';
+import { Navbar, Nav, Container, Badge, Offcanvas, Dropdown, Button } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import Logo from './Logo';
 import '../styles/components/Header.css';
+import { resolveImageUrl } from '../lib/resolveImage'
 
 const Header = () => {
   const [show, setShow] = useState(false);
@@ -160,10 +161,19 @@ const CartContent = () => {
         <div key={item.id} className="cart-item d-flex align-items-center mb-3">
           <div className="cart-item-image me-3">
             <img 
-              src={item.image || '/placeholder-product.jpg'} 
+              src={resolveImageUrl(item.image || item?.additionalImages?.[0]) || '/ImagenHome.png'} 
               alt={item.name}
               className="img-thumbnail"
+              loading="lazy"
               style={{ width: '60px', height: '60px', objectFit: 'cover' }}
+              onError={(e) => {
+                console.error('Cart: error cargando imagen', {
+                  id: item?.id,
+                  name: item?.name,
+                  src: e.currentTarget?.src
+                });
+                e.currentTarget.src = '/ImagenHome.png';
+              }}
             />
           </div>
           <div className="cart-item-details flex-grow-1">
@@ -184,7 +194,7 @@ const CartContent = () => {
                 +
               </button>
               <button 
-                className="btn btn-sm btn-outline-danger ms-2"
+                className="btn btn-sm btn-outline-danger ms-3"
                 onClick={() => removeFromCart(item.id)}
               >
                 <i className="bi bi-trash"></i>
@@ -193,13 +203,9 @@ const CartContent = () => {
           </div>
         </div>
       ))}
-      
-      <hr />
-      <div className="d-flex justify-content-between align-items-center">
-        <strong>Total: ${cartTotal.toFixed(2)}</strong>
-        <button className="btn btn-primary">
-          Proceder al Pago
-        </button>
+      <div className="cart-total mt-3 d-flex justify-content-between align-items-center">
+        <strong>Total: ${cartTotal}</strong>
+        <Button variant="primary">Proceder al Pago</Button>
       </div>
     </div>
   );

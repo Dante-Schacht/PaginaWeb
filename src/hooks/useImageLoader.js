@@ -7,23 +7,27 @@ const useImageLoader = (src, fallback = null) => {
 
   useEffect(() => {
     if (!src) {
+      console.warn('useImageLoader: src vacío o nulo', { src, fallback });
       setImageSrc(fallback);
       setIsLoading(false);
       return;
     }
 
+    console.debug('useImageLoader: iniciando carga', { src, fallback });
     setIsLoading(true);
     setHasError(false);
 
     const img = new Image();
     
     img.onload = () => {
+      console.debug('useImageLoader: carga exitosa', { src });
       setImageSrc(src);
       setIsLoading(false);
       setHasError(false);
     };
 
-    img.onerror = () => {
+    img.onerror = (e) => {
+      console.error('useImageLoader: error cargando imagen', { src, fallback, error: e });
       setImageSrc(fallback);
       setIsLoading(false);
       setHasError(true);

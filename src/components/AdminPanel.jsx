@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Container, Row, Col, Card, Tab, Nav, Button, Alert, Badge } from 'react-bootstrap';
 import { useApp } from '../context/AppContext';
 import ProductManager from './admin/ProductManager';
-import UserManager from './admin/UserManager';
 import OrderManager from './admin/OrderManager';
 import Dashboard from './admin/Dashboard';
 import '../styles/components/AdminPanel.css';
@@ -83,16 +82,7 @@ const AdminPanel = () => {
                       Productos
                     </Nav.Link>
                   </Nav.Item>
-                  <Nav.Item>
-                    <Nav.Link
-                      active={activeTab === 'users'}
-                      onClick={() => setActiveTab('users')}
-                      className="admin-nav-link"
-                    >
-                      <i className="bi bi-people me-2"></i>
-                      Usuarios
-                    </Nav.Link>
-                  </Nav.Item>
+
                   <Nav.Item>
                     <Nav.Link
                       active={activeTab === 'orders'}
@@ -114,7 +104,6 @@ const AdminPanel = () => {
                 <Tab.Content>
                   {activeTab === 'dashboard' && <Dashboard />}
                   {activeTab === 'products' && <ProductManager />}
-                  {activeTab === 'users' && <UserManager />}
                   {activeTab === 'orders' && <OrderManager />}
                 </Tab.Content>
               </Card.Body>

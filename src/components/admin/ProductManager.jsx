@@ -266,6 +266,20 @@ const ProductManager = () => {
     }
   };
 
+  // Añadir toggle de activo/inactivo
+  const handleToggleActive = async (product) => {
+    try {
+      setLoading(true);
+      await xano.updateProduct(product.id, { active: !product.active });
+      setSuccess(`Producto ${product.active ? 'desactivado' : 'activado'} correctamente`);
+      await loadProducts();
+    } catch (error) {
+      setError('Error al actualizar estado: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -389,8 +403,22 @@ const ProductManager = () => {
                         <Badge bg={product.stock > 0 ? 'success' : 'danger'}>
                           {product.stock > 0 ? 'Disponible' : 'Agotado'}
                         </Badge>
+                        <div className="mt-1">
+                          <Badge bg={product.active ? 'primary' : 'secondary'}>
+                            {product.active ? 'Activo' : 'Inactivo'}
+                          </Badge>
+                        </div>
                       </td>
                       <td>
+                        <Button
+                          variant={product.active ? 'outline-success' : 'outline-warning'}
+                          size="sm"
+                          className="me-2"
+                          onClick={() => handleToggleActive(product)}
+                          disabled={loading}
+                        >
+                          <i className={product.active ? 'bi bi-toggle2-on' : 'bi bi-toggle2-off'}></i>
+                        </Button>
                         <Button
                           variant="outline-primary"
                           size="sm"

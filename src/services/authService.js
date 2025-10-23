@@ -30,6 +30,9 @@ class AuthService {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.refreshTokenKey);
     localStorage.removeItem(this.userKey);
+    // Asegurar limpieza de claves antiguas/inconsistentes
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   }
 
   // Obtener usuario del localStorage

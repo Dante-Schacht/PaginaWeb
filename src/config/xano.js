@@ -3,7 +3,7 @@ import axios from 'axios';
 // Xano API Configuration
 const XANO_CONFIG = {
   // Base URL de tu API de Xano
-  BASE_URL: import.meta.env.VITE_XANO_BASE_URL || 'https://x8ki-letl-twmt.n7.xano.io/api:SzMZfFwX',
+  BASE_URL: import.meta.env.VITE_XANO_BASE_URL || import.meta.env.VITE_XANO_URL || 'https://x8ki-letl-twmt.n7.xano.io/api:SzMZfFwX',
   
   // Auth URL separada para autenticación
   AUTH_URL: import.meta.env.VITE_AUTH_URL || 'https://x8ki-letl-twmt.n7.xano.io/api:QbleTY9C',
@@ -11,13 +11,16 @@ const XANO_CONFIG = {
   // Endpoints
   ENDPOINTS: {
     // Productos
-    PRODUCTS: '/product',
-    PRODUCT_BY_ID: (id) => `/product/${id}`,
-    PRODUCTS_BY_CATEGORY: (category) => `/product?category=${category}`,
-    SEARCH_PRODUCTS: (query) => `/product/search?q=${query}`,
+    PRODUCTS: '/products',
+    PRODUCT_BY_ID: (id) => `/products/${id}`,
+    PRODUCTS_BY_CATEGORY: (category) => `/products?category=${category}`,
+    SEARCH_PRODUCTS: (query) => `/products/search?q=${query}`,
+    // Fallbacks para entornos que usan rutas en singular
+    PRODUCTS_FALLBACK: '/product',
+    PRODUCT_FALLBACK_BY_ID: (id) => `/product/${id}`,
     
     // Categorías (usar endpoint de productos para obtener categorías)
-    CATEGORIES: '/product/categories',
+    CATEGORIES: '/products/categories',
     
     // Carrito (si usas Xano para manejar carritos)
     CART: '/cart',
@@ -169,15 +172,28 @@ class XanoAPI {
   // Métodos para productos
   async getProducts(params = {}) {
     const queryString = new URLSearchParams(params).toString();
-    const endpoint = queryString ? 
+    const primary = queryString ? 
       `${this.config.ENDPOINTS.PRODUCTS}?${queryString}` : 
       this.config.ENDPOINTS.PRODUCTS;
-    
-    return this.request(endpoint);
+    try {
+      return await this.request(primary);
+    } catch (error) {
+      console.warn('getProducts: fallback a /product por error:', error.message);
+      const fallback = queryString ? 
+        `${this.config.ENDPOINTS.PRODUCTS_FALLBACK}?${queryString}` : 
+        this.config.ENDPOINTS.PRODUCTS_FALLBACK;
+      return this.request(fallback);
+    }
   }
 
   async getProductById(id) {
-    return this.request(this.config.ENDPOINTS.PRODUCT_BY_ID(id));
+    const primary = this.request(this.config.ENDPOINTS.PRODUCT_BY_ID(id));
+    try {
+      return await primary;
+    } catch (error) {
+      console.warn('getProductById: fallback a /product/:id por error:', error.message);
+      return this.request(this.config.ENDPOINTS.PRODUCT_FALLBACK_BY_ID(id));
+    }
   }
 
   async getProductsByCategory(category, params = {}) {
@@ -248,26 +264,21 @@ class XanoAPI {
       // strings: evita vacíos
       if (typeof val === "string") {
         const s = val.trim();
-        if (s) out[key] = s;
+        if (s.length) out[key] = s;
         continue;
       }
+      // otros tipos, asignación directa si no es undefined/null
       out[key] = val;
     }
 
-    if (Object.keys(out).length === 0) {
-      throw new Error("Nada que crear: payload vacío tras sanitizar.");
-    }
     return out;
   }
 
   async updateProduct(id, productData, token) {
-    // Sanitizar el payload usando la función local
     const sanitizedPayload = this.sanitizeProductPayload(productData);
-    
-    console.log('UpdateProduct - Sanitized payload:', sanitizedPayload);
-    
+
     return this.request(this.config.ENDPOINTS.PRODUCT_BY_ID(id), {
-      method: 'PATCH',
+      method: 'PUT',
       headers: {
         ...this.config.DEFAULT_HEADERS,
         'Authorization': `Bearer ${token}`
@@ -276,10 +287,12 @@ class XanoAPI {
     });
   }
 
-  // Método de sanitización interno
   sanitizeProductPayload(input = {}) {
     const out = {};
-    const keep = ["name", "description", "price", "stock", "brand", "category", "images", "active"];
+    const keep = [
+      "name", "description", "price", "stock", "brand", "category", "active",
+      "image", "images"
+    ];
 
     for (const key of keep) {
       let val = input[key];
@@ -305,60 +318,35 @@ class XanoAPI {
       }
       if (key === "images") {
         if (Array.isArray(val)) {
-          const arr = val.map(String).map(s => s.trim()).filter(Boolean);
-          if (arr.length) {
-            // Xano espera objetos con campos 'path', 'name', 'type', 'size', 'mime' y 'meta'
-            out.images = arr.map((url, index) => ({ 
-              path: url, 
-              name: `image_${index + 1}`,
-              type: "image",
-              size: 1024,
-              mime: "image/jpeg",
-              meta: {}
-            }));
-          }
-        } else if (typeof val === "string") {
-          if (val.includes(",")) {
-            const arr = val.split(",").map(s => s.trim()).filter(Boolean);
-            if (arr.length) {
-              out.images = arr.map((url, index) => ({ 
-                path: url, 
-                name: `image_${index + 1}`,
-                type: "image",
-                size: 1024,
-                mime: "image/jpeg",
-                meta: {}
-              }));
-            }
-          } else if (val.trim()) {
-            out.images = [{ 
-              path: val.trim(), 
-              name: "image_1",
-              type: "image",
-              size: 1024,
-              mime: "image/jpeg",
-              meta: {}
-            }];
-          }
+          // Limpiar las URLs de imágenes
+          const cleanedImages = val
+            .map((img) => (typeof img === "string" ? img.trim() : img))
+            .filter((img) => Boolean(img));
+          if (cleanedImages.length) out.images = cleanedImages;
         }
         continue;
       }
+      if (key === "image") {
+        if (typeof val === "string") {
+          const s = val.trim();
+          if (s.length) out.image = s;
+        } else {
+          out.image = val;
+        }
+        continue;
+      }
+
       // strings: evita vacíos
       if (typeof val === "string") {
         const s = val.trim();
-        if (s) out[key] = s;
+        if (s.length) out[key] = s;
         continue;
       }
+
+      // otros tipos, asignación directa si no es undefined/null
       out[key] = val;
     }
 
-    // Nunca enviar id/created_at
-    delete out.id;
-    delete out.created_at;
-
-    if (Object.keys(out).length === 0) {
-      throw new Error("Nada que actualizar: payload vacío tras sanitizar.");
-    }
     return out;
   }
 
@@ -372,140 +360,111 @@ class XanoAPI {
     });
   }
 
-  // Métodos para categorías
   async getCategories() {
     return this.request(this.config.ENDPOINTS.CATEGORIES);
   }
 
-  // Métodos para carrito
   async getCart(userId) {
-    return this.request(`${this.config.ENDPOINTS.CART}?user_id=${userId}`);
+    return this.request(`${this.config.ENDPOINTS.CART}?userId=${userId}`);
   }
 
   async addToCart(productId, quantity = 1, userId = null) {
     return this.request(this.config.ENDPOINTS.ADD_TO_CART, {
       method: 'POST',
-      data: {
-        product_id: productId,
-        quantity,
-        user_id: userId
-      }
+      body: { productId, quantity, userId }
     });
   }
 
   async removeFromCart(productId, userId = null) {
     return this.request(this.config.ENDPOINTS.REMOVE_FROM_CART, {
       method: 'DELETE',
-      data: {
-        product_id: productId,
-        user_id: userId
-      }
+      body: { productId, userId }
     });
   }
 
   async updateCart(productId, quantity, userId = null) {
     return this.request(this.config.ENDPOINTS.UPDATE_CART, {
       method: 'PUT',
-      data: {
-        product_id: productId,
-        quantity,
-        user_id: userId
-      }
+      body: { productId, quantity, userId }
     });
   }
 
-  // Métodos para autenticación
   async login(email, password) {
     return this.authRequest(this.config.ENDPOINTS.LOGIN, {
       method: 'POST',
-      data: { email, password }
+      body: { email, password }
     });
   }
 
   async register(userData) {
     return this.authRequest(this.config.ENDPOINTS.REGISTER, {
       method: 'POST',
-      data: userData
+      body: userData
     });
   }
 
   async logout(token) {
     return this.authRequest(this.config.ENDPOINTS.LOGOUT, {
       method: 'POST',
-      headers: {
-        ...this.config.DEFAULT_HEADERS,
-        'Authorization': `Bearer ${token}`
-      }
+      headers: { 'Authorization': `Bearer ${token}` }
     });
   }
 
   async getProfile(token) {
     return this.authRequest(this.config.ENDPOINTS.PROFILE, {
-      headers: {
-        ...this.config.DEFAULT_HEADERS,
-        'Authorization': `Bearer ${token}`
-      }
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` }
     });
   }
 
   async updateProfile(token, userData) {
     return this.authRequest(this.config.ENDPOINTS.UPDATE_PROFILE, {
       method: 'PUT',
-      headers: {
-        ...this.config.DEFAULT_HEADERS,
-        'Authorization': `Bearer ${token}`
-      },
-      data: userData
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: userData
     });
   }
 
   async changePassword(token, currentPassword, newPassword) {
     return this.authRequest(this.config.ENDPOINTS.CHANGE_PASSWORD, {
       method: 'POST',
-      headers: {
-        ...this.config.DEFAULT_HEADERS,
-        'Authorization': `Bearer ${token}`
-      },
-      data: {
-        current_password: currentPassword,
-        new_password: newPassword
-      }
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: { currentPassword, newPassword }
     });
   }
 
   async forgotPassword(email) {
     return this.authRequest(this.config.ENDPOINTS.FORGOT_PASSWORD, {
       method: 'POST',
-      data: { email }
+      body: { email }
     });
   }
 
   async resetPassword(token, password) {
     return this.authRequest(this.config.ENDPOINTS.RESET_PASSWORD, {
       method: 'POST',
-      data: { token, password }
+      body: { token, password }
     });
   }
 
   async verifyEmail(token) {
     return this.authRequest(this.config.ENDPOINTS.VERIFY_EMAIL, {
       method: 'POST',
-      data: { token }
+      body: { token }
     });
   }
 
   async refreshToken(refreshToken) {
     return this.authRequest(this.config.ENDPOINTS.REFRESH_TOKEN, {
       method: 'POST',
-      data: { refresh_token: refreshToken }
+      body: { refreshToken }
     });
   }
 
-  // Métodos para órdenes
   async createOrder(orderData) {
-    return this.request(this.config.ENDPOINTS.CREATE_ORDER, {
+    return this.request(this.config.ENDPOINTS.ORDERS, {
       method: 'POST',
-      data: orderData
+      body: orderData
     });
   }
 
@@ -514,24 +473,19 @@ class XanoAPI {
   }
 
   async getUserOrders(userId) {
-    return this.request(`${this.config.ENDPOINTS.ORDERS}?user_id=${userId}`);
+    return this.request(`${this.config.ENDPOINTS.ORDERS}?userId=${userId}`);
   }
 
-  // Métodos para contacto
   async sendContactMessage(messageData) {
     return this.request(this.config.ENDPOINTS.CONTACT, {
       method: 'POST',
-      data: messageData
+      body: messageData
     });
   }
 
-  // Métodos para blogs
   async getBlogs(params = {}) {
     const queryString = new URLSearchParams(params).toString();
-    const endpoint = queryString ? 
-      `${this.config.ENDPOINTS.BLOGS}?${queryString}` : 
-      this.config.ENDPOINTS.BLOGS;
-    
+    const endpoint = queryString ? `${this.config.ENDPOINTS.BLOGS}?${queryString}` : this.config.ENDPOINTS.BLOGS;
     return this.request(endpoint);
   }
 
@@ -543,60 +497,45 @@ class XanoAPI {
     return this.request(this.config.ENDPOINTS.FEATURED_BLOGS);
   }
 
-  // Métodos para usuarios
   async getUsers(params = {}, token) {
     const queryString = new URLSearchParams(params).toString();
-    const endpoint = queryString ? 
-      `${this.config.ENDPOINTS.USERS}?${queryString}` : 
-      this.config.ENDPOINTS.USERS;
-    
-    // Usar la URL de autenticación para usuarios con token
-    const options = token ? {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    } : {};
-    
-    return this.request(endpoint, options, this.config.AUTH_URL);
+    const endpoint = queryString ? `${this.config.ENDPOINTS.USERS}?${queryString}` : this.config.ENDPOINTS.USERS;
+    return this.authRequest(endpoint, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
   }
 
   async createUser(userData, token) {
-    return this.request(this.config.ENDPOINTS.CREATE_USER, {
+    return this.authRequest(this.config.ENDPOINTS.CREATE_USER, {
       method: 'POST',
-      headers: {
-        ...this.config.DEFAULT_HEADERS,
-        'Authorization': `Bearer ${token}`
-      },
-      data: userData
-    }, this.config.AUTH_URL);
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: userData
+    });
   }
 
   async updateUser(id, userData, token) {
-    return this.request(this.config.ENDPOINTS.UPDATE_USER(id), {
+    return this.authRequest(this.config.ENDPOINTS.UPDATE_USER(id), {
       method: 'PUT',
-      headers: {
-        ...this.config.DEFAULT_HEADERS,
-        'Authorization': `Bearer ${token}`
-      },
-      data: userData
-    }, this.config.AUTH_URL);
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: userData
+    });
   }
 
   async deleteUser(id, token) {
-    return this.request(this.config.ENDPOINTS.DELETE_USER(id), {
+    return this.authRequest(this.config.ENDPOINTS.DELETE_USER(id), {
       method: 'DELETE',
-      headers: {
-        ...this.config.DEFAULT_HEADERS,
-        'Authorization': `Bearer ${token}`
-      }
-    }, this.config.AUTH_URL);
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
   }
 }
 
-// Función para sanitizar payload de productos
 export function sanitizeProductPayload(input = {}) {
   const out = {};
-  const keep = ["name", "description", "price", "stock", "brand", "category", "images", "active"];
+  const keep = [
+    "id", "name", "description", "price", "stock", "brand", "category", "active",
+    "image", "images", "additionalImages", "rating", "reviews"
+  ];
 
   for (const key of keep) {
     let val = input[key];
@@ -622,41 +561,38 @@ export function sanitizeProductPayload(input = {}) {
     }
     if (key === "images") {
       if (Array.isArray(val)) {
-        const arr = val.map(String).map(s => s.trim()).filter(Boolean);
-        if (arr.length) out.images = arr;
-      } else if (typeof val === "string") {
-        if (val.includes(",")) {
-          const arr = val.split(",").map(s => s.trim()).filter(Boolean);
-          if (arr.length) out.images = arr;
-        } else if (val.trim()) {
-          out.images = [val.trim()];
-        }
+        const cleanedImages = val
+          .map((img) => (typeof img === "string" ? img.trim() : img))
+          .filter((img) => Boolean(img));
+        if (cleanedImages.length) out.images = cleanedImages;
       }
       continue;
     }
-    // strings: evita vacíos
-    if (typeof val === "string") {
-      const s = val.trim();
-      if (s) out[key] = s;
+    if (key === "image") {
+      if (typeof val === "string") {
+        const s = val.trim();
+        if (s.length) out.image = s;
+      } else {
+        out.image = val;
+      }
       continue;
     }
+
+    if (typeof val === "string") {
+      const s = val.trim();
+      if (s.length) out[key] = s;
+      continue;
+    }
+
     out[key] = val;
   }
 
-  // Nunca enviar id/created_at
-  delete out.id;
-  delete out.created_at;
-
-  if (Object.keys(out).length === 0) {
-    throw new Error("Nada que actualizar: payload vacío tras sanitizar.");
-  }
   return out;
 }
 
-// Función para sanitizar payload de creación de productos
 export function sanitizeCreateProductPayload(input = {}) {
   const out = {};
-  const keep = ["name", "description", "price", "stock", "brand", "category", "active"];
+  const keep = ["name", "description", "price", "stock", "brand", "category", "active", "image"];
 
   for (const key of keep) {
     let val = input[key];
@@ -680,23 +616,29 @@ export function sanitizeCreateProductPayload(input = {}) {
       }
       continue;
     }
-    // strings: evita vacíos
-    if (typeof val === "string") {
-      const s = val.trim();
-      if (s) out[key] = s;
+
+    if (key === "image") {
+      if (typeof val === "string") {
+        const s = val.trim();
+        if (s.length) out.image = s;
+      } else {
+        out.image = val;
+      }
       continue;
     }
+
+    if (typeof val === "string") {
+      const s = val.trim();
+      if (s.length) out[key] = s;
+      continue;
+    }
+
     out[key] = val;
   }
 
-  if (Object.keys(out).length === 0) {
-    throw new Error("Nada que crear: payload vacío tras sanitizar.");
-  }
   return out;
 }
 
-
-// Crear instancia de la API
 const xanoAPI = new XanoAPI();
 
 export default xanoAPI;

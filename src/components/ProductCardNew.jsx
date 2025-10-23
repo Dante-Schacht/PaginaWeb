@@ -8,6 +8,14 @@ const ProductCardNew = ({ product, onClick }) => {
   // Resolver la imagen principal
   const mainImage = product?.images?.[0] ? resolveImageUrl(product.images[0]) : null;
   
+  // Debug de imagen
+  console.debug('ProductCardNew: debug imagen', {
+    id: product?.id,
+    name: product?.name,
+    rawFirstImage: product?.images?.[0],
+    resolved: mainImage,
+  });
+  
   return (
     <Card className="product-card h-100" onClick={onClick} style={{ cursor: 'pointer' }}>
       <div className="product-image-container">
@@ -18,6 +26,13 @@ const ProductCardNew = ({ product, onClick }) => {
             alt={product.name}
             className="product-image"
             loading="lazy"
+            onError={(e) => {
+              console.error('ProductCardNew: error cargando imagen', {
+                id: product?.id,
+                name: product?.name,
+                src: e.currentTarget?.src
+              });
+            }}
           />
         ) : (
           <div className="product-image-placeholder d-flex align-items-center justify-content-center">

@@ -3,12 +3,27 @@ import { Card, Button, Badge, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import useImageLoader from '../hooks/useImageLoader';
+import { resolveImageUrl } from '../lib/resolveImage';
 import '../styles/components/ProductCard.css';
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useApp();
   const navigate = useNavigate();
-  const { imageSrc, isLoading } = useImageLoader(product.image);
+
+  // Resolver URL absoluta desde Xano (evita rutas /vault o relativas)
+  const resolvedCandidate = resolveImageUrl(product.image);
+  const { imageSrc, isLoading, hasError } = useImageLoader(resolvedCandidate);
+
+  // Debug de imagen
+  console.debug('ProductCard: debug imagen', {
+    id: product?.id,
+    name: product?.name,
+    source: product?.image,
+    resolvedCandidate,
+    resolvedLoaded: imageSrc,
+    isLoading,
+    hasError
+  });
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
@@ -42,6 +57,13 @@ const ProductCard = ({ product }) => {
             alt={product.name}
             className="product-image"
             loading="lazy"
+            onError={(e) => {
+              console.error('ProductCard: error cargando imagen', {
+                id: product?.id,
+                name: product?.name,
+                src: e.currentTarget?.src
+              });
+            }}
           />
         ) : (
           <div className="product-image-placeholder d-flex align-items-center justify-content-center">

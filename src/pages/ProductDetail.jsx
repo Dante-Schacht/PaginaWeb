@@ -7,6 +7,7 @@ import ProductCard from '../components/ProductCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import useImageLoader from '../hooks/useImageLoader';
 import { formatPrice, calculateDiscount } from '../utils/dataAdapter';
+import { resolveImageUrl } from '../lib/resolveImage';
 import '../styles/pages/ProductDetail.css';
 
 const ProductDetail = () => {
@@ -22,8 +23,9 @@ const ProductDetail = () => {
   const [showDetails, setShowDetails] = useState(false);
   
   // Usar la imagen seleccionada del carrusel en lugar de la imagen principal
-  const currentImageSrc = product?.additionalImages?.[selectedImageIndex] || product?.image;
-  const { imageSrc, isLoading } = useImageLoader(currentImageSrc);
+  const currentImageSrcRaw = product?.additionalImages?.[selectedImageIndex] || product?.image;
+  const currentImageSrcResolved = resolveImageUrl(currentImageSrcRaw);
+  const { imageSrc, isLoading } = useImageLoader(currentImageSrcResolved);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -49,7 +51,23 @@ const ProductDetail = () => {
             .slice(0, 4);
           setRecommendedProducts(recommended);
         } else {
-          setProduct(null);
+          // Fallback: cargar desde Xano por ID
+          try {
+            console.log('ProductDetail: producto no está en contexto, cargando por ID desde Xano');
+            const xanoProduct = await xano.getProductById(parseInt(id));
+            if (xanoProduct) {
+              setProduct(xanoProduct);
+              const recommended = products
+                .filter(p => p.category === xanoProduct.category && p.id !== parseInt(id))
+                .slice(0, 4);
+              setRecommendedProducts(recommended);
+            } else {
+              setProduct(null);
+            }
+          } catch (fetchErr) {
+            console.error('ProductDetail: error cargando producto por ID desde Xano', fetchErr);
+            setProduct(null);
+          }
         }
         
       } catch (error) {
@@ -67,7 +85,7 @@ const ProductDetail = () => {
       setLoading(false);
       setProduct(null);
     }
-  }, [id, products]);
+  }, [id, products, xano]);
 
   const handleAddToCart = () => {
     try {
@@ -246,9 +264,18 @@ const ProductDetail = () => {
                         title={`Ver imagen ${index + 1}`}
                       >
                         <img 
-                          src={image} 
+                          src={resolveImageUrl(image)} 
                           alt={`Miniatura ${index + 1}`}
                           className="thumbnail-image"
+                          onError={(e) => {
+                            console.error('ProductDetail: error cargando miniatura', {
+                              id: product?.id,
+                              name: product?.name,
+                              src: e.currentTarget?.src,
+                              index
+                            });
+                            e.currentTarget.src = '/ImagenHome.png';
+                          }}
                         />
                       </button>
                     ))}

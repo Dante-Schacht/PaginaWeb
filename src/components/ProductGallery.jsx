@@ -5,9 +5,16 @@ import { resolveImageUrl } from "../lib/resolveImage";
 export default function ProductGallery({ product }) {
   const images = useMemo(() => {
     const raw = Array.isArray(product?.images) ? product.images : [];
-    return raw
+    const resolved = raw
       .map((it) => resolveImageUrl(it))
       .filter((u) => typeof u === "string" && u.length > 0);
+    console.debug('ProductGallery: imágenes resueltas', {
+      id: product?.id,
+      name: product?.name,
+      raw,
+      resolved
+    });
+    return resolved;
   }, [product]);
 
   const [active, setActive] = useState(0);
@@ -22,6 +29,14 @@ export default function ProductGallery({ product }) {
             src={current}
             alt={product?.name || "Producto"}
             style={{ width: "100%", aspectRatio: "1/1", objectFit: "contain", borderRadius: 12 }}
+            onError={(e) => {
+              console.error('ProductGallery: error cargando imagen principal', {
+                id: product?.id,
+                name: product?.name,
+                src: e.currentTarget?.src,
+                activeIndex: active
+              });
+            }}
           />
         ) : (
           <div className="empty">
@@ -47,6 +62,14 @@ export default function ProductGallery({ product }) {
                   alt={`Miniatura ${i + 1}`}
                   style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 8 }}
                   loading="lazy"
+                  onError={(e) => {
+                    console.error('ProductGallery: error cargando miniatura', {
+                      id: product?.id,
+                      name: product?.name,
+                      src: e.currentTarget?.src,
+                      index: i
+                    });
+                  }}
                 />
               </button>
             </div>
