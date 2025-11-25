@@ -3,7 +3,7 @@ import { Card, Button, Badge, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import useImageLoader from '../hooks/useImageLoader';
-import { resolveImageUrl } from '../lib/resolveImage';
+import { resolveImageUrl, isUnwantedImage } from '../lib/resolveImage';
 import '../styles/components/ProductCard.css';
 
 const ProductCard = ({ product }) => {
@@ -11,7 +11,9 @@ const ProductCard = ({ product }) => {
   const navigate = useNavigate();
 
   // Resolver URL absoluta desde Xano (evita rutas /vault o relativas)
-  const resolvedCandidate = resolveImageUrl(product.image);
+  const rawImage = product?.images?.[0] || product?.image;
+  const skipImage = isUnwantedImage(rawImage);
+  const resolvedCandidate = skipImage ? null : resolveImageUrl(rawImage);
   const { imageSrc, isLoading, hasError } = useImageLoader(resolvedCandidate);
 
   // Debug de imagen

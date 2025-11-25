@@ -106,7 +106,21 @@ class XanoAPI {
     }
 
     try {
+      const hasAuth = Boolean(axiosConfig.headers?.Authorization);
+      const safeHeaders = { ...axiosConfig.headers };
+      if (hasAuth) safeHeaders.Authorization = 'Bearer ***';
+      console.debug('Xano request start:', {
+        method: axiosConfig.method,
+        url,
+        headers: safeHeaders,
+        hasBody: Boolean(axiosConfig.data)
+      });
       const response = await axios(axiosConfig);
+      console.debug('Xano request ok:', {
+        method: axiosConfig.method,
+        url,
+        status: response.status
+      });
       return response.data;
     } catch (error) {
       // Manejar cancelaciones sin ruido
@@ -234,15 +248,28 @@ class XanoAPI {
     }
     
     console.log('CreateProduct - Sanitized payload:', sanitizedPayload);
-    
-    return this.request(this.config.ENDPOINTS.PRODUCTS, {
+    const opts = {
       method: 'POST',
       headers: {
         ...this.config.DEFAULT_HEADERS,
         'Authorization': `Bearer ${token}`
       },
-      data: sanitizedPayload
+      body: sanitizedPayload
+    };
+    console.debug('createProduct: preparando request', {
+      endpoint: this.config.ENDPOINTS.PRODUCTS,
+      imagesCount: sanitizedPayload.images?.length || 0
     });
+    
+    try {
+      return await this.request(this.config.ENDPOINTS.PRODUCTS, opts);
+    } catch (error) {
+      console.warn('createProduct: fallback a /product por error:', error.message);
+      console.debug('createProduct: fallback ejecutado', {
+        endpoint: this.config.ENDPOINTS.PRODUCTS_FALLBACK
+      });
+      return this.request(this.config.ENDPOINTS.PRODUCTS_FALLBACK, opts);
+    }
   }
 
   // Método de sanitización para creación de productos
@@ -287,15 +314,38 @@ class XanoAPI {
 
   async updateProduct(id, productData, token) {
     const sanitizedPayload = this.sanitizeProductPayload(productData);
-
-    return this.request(this.config.ENDPOINTS.PRODUCT_BY_ID(id), {
-      method: 'PUT',
-      headers: {
-        ...this.config.DEFAULT_HEADERS,
-        'Authorization': `Bearer ${token}`
-      },
-      data: sanitizedPayload
-    });
+    const baseHeaders = {
+      ...this.config.DEFAULT_HEADERS,
+      'Authorization': `Bearer ${token}`
+    };
+    const custom = import.meta.env.VITE_XANO_PRODUCT_UPDATE_ENDPOINT || null;
+    const attempts = [
+      { endpoint: this.config.ENDPOINTS.PRODUCT_BY_ID(id), method: 'PUT' },
+      { endpoint: this.config.ENDPOINTS.PRODUCT_BY_ID(id), method: 'PATCH' },
+      { endpoint: this.config.ENDPOINTS.PRODUCT_FALLBACK_BY_ID(id), method: 'PUT' },
+      { endpoint: this.config.ENDPOINTS.PRODUCT_FALLBACK_BY_ID(id), method: 'PATCH' },
+      { endpoint: this.config.ENDPOINTS.PRODUCT_FALLBACK_BY_ID(id), method: 'POST' }
+    ];
+    if (custom) {
+      attempts.unshift({ endpoint: custom.replace(':id', id), method: 'PATCH' });
+      attempts.unshift({ endpoint: custom.replace(':id', id), method: 'PUT' });
+    }
+    let lastError = null;
+    for (const a of attempts) {
+      const opts = {
+        method: a.method,
+        headers: baseHeaders,
+        body: sanitizedPayload
+      };
+      console.debug('updateProduct: intentando', { endpoint: a.endpoint, method: a.method, id });
+      try {
+        return await this.request(a.endpoint, opts);
+      } catch (error) {
+        lastError = error;
+        console.warn('updateProduct: intento fallido', { endpoint: a.endpoint, method: a.method, message: error.message });
+      }
+    }
+    throw lastError || new Error('No se pudo actualizar el producto');
   }
 
   sanitizeProductPayload(input = {}) {
@@ -362,13 +412,27 @@ class XanoAPI {
   }
 
   async deleteProduct(id, token) {
-    return this.request(this.config.ENDPOINTS.PRODUCT_BY_ID(id), {
+    const opts = {
       method: 'DELETE',
       headers: {
         ...this.config.DEFAULT_HEADERS,
         'Authorization': `Bearer ${token}`
       }
+    };
+    console.debug('deleteProduct: preparando request', {
+      id,
+      endpoint: this.config.ENDPOINTS.PRODUCT_BY_ID(id)
     });
+    try {
+      return await this.request(this.config.ENDPOINTS.PRODUCT_BY_ID(id), opts);
+    } catch (error) {
+      console.warn('deleteProduct: fallback a /product/:id por error:', error.message);
+      console.debug('deleteProduct: fallback ejecutado', {
+        id,
+        endpoint: this.config.ENDPOINTS.PRODUCT_FALLBACK_BY_ID(id)
+      });
+      return this.request(this.config.ENDPOINTS.PRODUCT_FALLBACK_BY_ID(id), opts);
+    }
   }
 
   async getCategories() {

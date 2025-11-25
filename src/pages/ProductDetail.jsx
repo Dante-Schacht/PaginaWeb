@@ -7,7 +7,7 @@ import ProductCard from '../components/ProductCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import useImageLoader from '../hooks/useImageLoader';
 import { formatPrice, calculateDiscount } from '../utils/dataAdapter';
-import { resolveImageUrl, PLACEHOLDER_IMAGE } from '../lib/resolveImage';
+import { resolveImageUrl, PLACEHOLDER_IMAGE, isUnwantedImage } from '../lib/resolveImage';
 import '../styles/pages/ProductDetail.css';
 
 const ProductDetail = () => {
@@ -31,7 +31,7 @@ const ProductDetail = () => {
 
   // Usar la imagen seleccionada del carrusel en lugar de la imagen principal
   const currentImageSrcRaw = product?.additionalImages?.[selectedImageIndex] || product?.image;
-  const currentImageSrcResolved = resolveImageUrl(currentImageSrcRaw);
+  const currentImageSrcResolved = isUnwantedImage(currentImageSrcRaw) ? null : resolveImageUrl(currentImageSrcRaw);
   const { imageSrc, isLoading } = useImageLoader(currentImageSrcResolved);
 
   useEffect(() => {
@@ -275,7 +275,7 @@ const ProductDetail = () => {
                         title={`Ver imagen ${index + 1}`}
                       >
                         <img 
-                          src={resolveImageUrl(image)} 
+                          src={isUnwantedImage(image) ? PLACEHOLDER_IMAGE : resolveImageUrl(image)} 
                           alt={`Miniatura ${index + 1}`}
                           className="thumbnail-image"
                           onError={(e) => {

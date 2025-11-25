@@ -149,8 +149,21 @@
 
 /* Product Manager Styles */
 .product-manager .product-thumb {
+  width: 60px;
+  height: 60px;
   border-radius: 0.5rem;
   border: 2px solid #f8f9fa;
+  object-fit: contain;
+  object-position: center;
+  background: #ffffff;
+}
+
+.product-manager .product-thumb-placeholder {
+  width: 60px;
+  height: 60px;
+  border-radius: 0.5rem;
+  border: 2px solid #f8f9fa;
+  background: #ffffff;
 }
 
 .product-manager .table th {

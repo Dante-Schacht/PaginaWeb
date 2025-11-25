@@ -109,7 +109,7 @@ export const mapProduct = (xanoProduct) => {
       isNew,
       originalPrice,
       discount,
-      additionalImages: ['/ImagenHome.png', '/ImagenHome.png', '/ImagenHome.png'],
+      additionalImages: [],
       features: productDetails.features,
       specifications: productDetails.specifications,
       detailedDescription: `${product.description} Este producto está diseñado para ofrecer la mejor experiencia de usuario con tecnología de vanguardia y materiales de alta calidad.`,
@@ -137,11 +137,13 @@ export const mapProduct = (xanoProduct) => {
     const images = xanoImages
       .filter(img => {
         console.log('🔍 processImages - Filtrando imagen:', img);
-        return img && img.path && img.path.trim() !== '';
+        const candidate = img && (img.path || img.url);
+        return !!(candidate && String(candidate).trim());
       })
       .map(img => {
-        console.log('🔍 processImages - Mapeando imagen:', img.path);
-        return img.path;
+        const candidate = img.path || img.url;
+        console.log('🔍 processImages - Mapeando imagen:', candidate);
+        return candidate;
       });
     
     console.log('✅ processImages - Imágenes válidas encontradas:', images);
@@ -164,6 +166,7 @@ export const mapProduct = (xanoProduct) => {
     brand: xanoProduct.brand,
     image: processedImages?.[0] || null,
     additionalImages: processedImages || [],
+    images: processedImages || [],
     stock: xanoProduct.stock || 0,
     isNew: additionalData.isNew,
     discount: additionalData.discount,

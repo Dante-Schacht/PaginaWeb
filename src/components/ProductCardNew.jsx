@@ -1,12 +1,13 @@
 // src/components/ProductCardNew.jsx
 import React from 'react';
 import { Card, Badge } from 'react-bootstrap';
-import { resolveImageUrl } from '../lib/resolveImage';
+import { resolveImageUrl, isUnwantedImage } from '../lib/resolveImage';
 import '../styles/components/ProductCard.css';
 
 const ProductCardNew = ({ product, onClick }) => {
   // Resolver la imagen principal
-  const mainImage = product?.images?.[0] ? resolveImageUrl(product.images[0]) : null;
+  const firstImage = product?.images?.[0] || null;
+  const mainImage = firstImage && !isUnwantedImage(firstImage) ? resolveImageUrl(firstImage) : null;
   
   // Debug de imagen
   console.debug('ProductCardNew: debug imagen', {

@@ -3,6 +3,7 @@ import { Row, Col, Card, Button, Form, Modal, Alert, Badge, Table } from 'react-
 import { useApp } from '../../context/AppContext';
 import useXano from '../../hooks/useXano';
 import { uploadImages } from '../../lib/xanoEndpoints';
+import { resolveImageUrl, PLACEHOLDER_IMAGE, isUnwantedImage } from '../../lib/resolveImage';
 
 const ProductManager = () => {
   const { products, setProducts, productsLoaded } = useApp();
@@ -166,6 +167,11 @@ const ProductManager = () => {
       
       // Si hay archivos seleccionados, subirlos primero
       if (selectedFiles.length > 0) {
+        console.debug('ProductManager: archivos seleccionados', {
+          count: selectedFiles.length,
+          names: selectedFiles.map(f => f.name),
+          sizes: selectedFiles.map(f => f.size)
+        });
         setUploadingImages(true);
         try {
           uploadedImages = await uploadImages(selectedFiles);
@@ -180,6 +186,14 @@ const ProductManager = () => {
       }
       
       // Preparar datos en el formato que espera Xano
+      // Preparar payload de imágenes para Xano ([image] acepta objetos con id)
+      const imagesPayload = Array.isArray(uploadedImages)
+        ? uploadedImages
+            .filter((img) => img && (img.id || img.path || img.url))
+            .map((img) => (img.id ? { id: img.id } : img))
+        : [];
+      console.debug('ProductManager: imagesPayload', { count: imagesPayload.length, sample: imagesPayload[0] });
+
       const productData = {
         name: formData.name,
         description: formData.description,
@@ -187,16 +201,18 @@ const ProductManager = () => {
         stock: formData.stock,
         brand: formData.brand,
         category: formData.category,
-        images: uploadedImages, // Usar las imágenes subidas
+        ...(selectedFiles.length > 0 && { images: imagesPayload }),
         active: true
       };
 
       if (editingProduct) {
         // Actualizar producto existente
+        console.debug('ProductManager: updateProduct', { id: editingProduct.id, productData });
         await xano.updateProduct(editingProduct.id, productData);
         setSuccess('Producto actualizado correctamente');
       } else {
         // Crear nuevo producto
+        console.debug('ProductManager: createProduct', { productData });
         await xano.createProduct(productData);
         setSuccess('Producto creado correctamente');
       }
@@ -369,12 +385,18 @@ const ProductManager = () => {
                   {products.map((product) => (
                     <tr key={product.id}>
                       <td>
-                        <img 
-                          src={product.image || '/ImagenHome.png'} 
-                          alt={product.name}
-                          className="product-thumb"
-                          style={{ width: '50px', height: '50px', objectFit: 'cover' }}
-                        />
+                        {isUnwantedImage(product?.images?.[0] || product?.image) ? (
+                          <div className="product-thumb-placeholder d-flex align-items-center justify-content-center">
+                            <i className="bi bi-image text-muted"></i>
+                          </div>
+                        ) : (
+                          <img
+                            src={resolveImageUrl(product?.images?.[0] || product?.image)}
+                            alt={product.name}
+                            className="product-thumb"
+                            onError={(e) => { e.currentTarget.src = PLACEHOLDER_IMAGE; }}
+                          />
+                        )}
                       </td>
                       <td>
                         <div>
@@ -596,7 +618,8 @@ const ProductManager = () => {
                           style={{ 
                             width: '80px', 
                             height: '80px', 
-                            objectFit: 'cover',
+                            objectFit: 'contain',
+                            objectPosition: 'center',
                             borderRadius: '8px',
                             border: '2px solid #dee2e6'
                           }}

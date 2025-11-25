@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import Logo from './Logo';
 import '../styles/components/Header.css';
-import { resolveImageUrl } from '../lib/resolveImage'
+import { resolveImageUrl, isUnwantedImage, PLACEHOLDER_IMAGE } from '../lib/resolveImage'
 
 const Header = () => {
   const [show, setShow] = useState(false);
@@ -160,21 +160,27 @@ const CartContent = () => {
       {cart.map(item => (
         <div key={item.id} className="cart-item d-flex align-items-center mb-3">
           <div className="cart-item-image me-3">
-            <img 
-              src={resolveImageUrl(item.image || item?.additionalImages?.[0]) || '/ImagenHome.png'} 
-              alt={item.name}
-              className="img-thumbnail"
-              loading="lazy"
-              style={{ width: '60px', height: '60px', objectFit: 'cover' }}
-              onError={(e) => {
-                console.error('Cart: error cargando imagen', {
-                  id: item?.id,
-                  name: item?.name,
-                  src: e.currentTarget?.src
-                });
-                e.currentTarget.src = '/ImagenHome.png';
-              }}
-            />
+            {isUnwantedImage(item.image || item?.additionalImages?.[0]) ? (
+              <div className="d-flex align-items-center justify-content-center img-thumbnail" style={{ width: '60px', height: '60px', background: '#fff' }}>
+                <i className="bi bi-image text-muted"></i>
+              </div>
+            ) : (
+              <img 
+                src={resolveImageUrl(item.image || item?.additionalImages?.[0])} 
+                alt={item.name}
+                className="img-thumbnail"
+                loading="lazy"
+                style={{ width: '60px', height: '60px', objectFit: 'contain', objectPosition: 'center', background: '#fff' }}
+                onError={(e) => {
+                  console.error('Cart: error cargando imagen', {
+                    id: item?.id,
+                    name: item?.name,
+                    src: e.currentTarget?.src
+                  });
+                  e.currentTarget.src = PLACEHOLDER_IMAGE;
+                }}
+              />
+            )}
           </div>
           <div className="cart-item-details flex-grow-1">
             <h6 className="mb-1">{item.name}</h6>
