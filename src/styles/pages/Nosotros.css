@@ -7,7 +7,7 @@
 .hero-section {
   background: linear-gradient(135deg, #9C2007 0%, #701705 50%, #440E03 100%);
   color: white;
-  padding: 4rem 0;
+  padding: 3rem 0;
   position: relative;
   overflow: hidden;
 }
@@ -43,9 +43,11 @@
 }
 
 .hero-subtitle {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
   margin-bottom: 2rem;
-  opacity: 0.9;
+  opacity: 0.92;
   line-height: 1.6;
 }
 
@@ -81,7 +83,7 @@
 .hero-placeholder {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 1rem;
-  padding: 3rem;
+  padding: 2rem;
   text-align: center;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -234,6 +236,14 @@
 
 .team-card:hover .team-image {
   transform: scale(1.05);
+}
+
+.team-emoji {
+  font-size: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 
 .team-name {

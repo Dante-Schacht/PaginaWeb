@@ -5,6 +5,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 import BackToTop from './components/BackToTop';
+import CartQuickButton from './components/CartQuickButton';
 import ErrorBoundary from './components/ErrorBoundary';
 import Home from './pages/Home';
 import Productos from './pages/Productos';
@@ -17,6 +18,12 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
+import Checkout from './pages/Checkout';
+import Orders from './pages/Orders';
+import OrderDetail from './pages/OrderDetail';
+import CheckoutPayment from './pages/CheckoutPayment';
+import Privacidad from './pages/Privacidad';
+import Terminos from './pages/Terminos';
 import './styles/global/App.css';
 
 function App() {
@@ -45,6 +52,12 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/checkout/payment" element={<CheckoutPayment />} />
+              <Route path="/orders" element={<Orders />} />
+              <Route path="/orders/:id" element={<OrderDetail />} />
+              <Route path="/privacidad" element={<Privacidad />} />
+              <Route path="/terminos-condiciones" element={<Terminos />} />
             </Routes>
           </ErrorBoundary>
         </main>
@@ -52,6 +65,7 @@ function App() {
           <Footer />
         </ErrorBoundary>
         <BackToTop />
+        <CartQuickButton />
       </div>
     </AppProvider>
   );

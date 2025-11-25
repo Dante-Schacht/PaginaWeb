@@ -6,28 +6,32 @@ import '../styles/pages/Nosotros.css';
 const Nosotros = () => {
   const teamMembers = [
     {
-      name: 'Ana García',
-      position: 'CEO & Fundadora',
-      image: '/placeholder-team.jpg',
-      description: 'Apasionada por la tecnología y el gaming desde hace más de 10 años.'
+      name: 'Dante Schacht',
+      position: 'CEO & Fundador',
+      emoji: '🧑‍💼',
+      gender: 'male',
+      description: 'Lidera la visión y estrategia de ElectroVerse para ofrecer tecnología accesible y confiable.'
     },
     {
-      name: 'Carlos Rodríguez',
+      name: 'Sofía Pérez',
+      position: 'COO',
+      emoji: '👩‍💼',
+      gender: 'female',
+      description: 'Optimiza operaciones y servicio al cliente para una experiencia impecable.'
+    },
+    {
+      name: 'Mateo Rojas',
       position: 'CTO',
-      image: '/placeholder-team.jpg',
-      description: 'Experto en hardware y sistemas, con más de 8 años en la industria.'
+      emoji: '👨‍💻',
+      gender: 'male',
+      description: 'Encabeza la tecnología, pruebas de hardware y selección de productos.'
     },
     {
-      name: 'María López',
-      position: 'Directora de Marketing',
-      image: '/placeholder-team.jpg',
-      description: 'Especialista en marketing digital y experiencia de usuario.'
-    },
-    {
-      name: 'David Martínez',
-      position: 'Jefe de Ventas',
-      image: '/placeholder-team.jpg',
-      description: 'Conoce cada producto como la palma de su mano.'
+      name: 'Valentina Núñez',
+      position: 'Marketing',
+      emoji: '👩‍🎨',
+      gender: 'female',
+      description: 'Comunica la marca con campañas creativas y contenido útil para la comunidad.'
     }
   ];
 
@@ -66,15 +70,17 @@ const Nosotros = () => {
       {/* Hero Section */}
       <section className="hero-section">
         <Container>
-          <Row className="align-items-center min-vh-50">
+          <Row className="align-items-center">
             <Col lg={6}>
               <div className="hero-content">
                 <h1 className="hero-title">
                   Conoce a <span className="brand-highlight">ElectroVerse</span>
                 </h1>
                 <p className="hero-subtitle">
-                  Somos más que una tienda de productos electrónicos. Somos una comunidad 
-                  apasionada por la tecnología, el gaming y la innovación.
+                  Tecnología, gaming e innovación.
+                  Productos confiables y asesoría honesta para armar tu setup sin complicaciones.
+                  Probamos, comparamos y recomendamos lo mejor para tu presupuesto.
+                  Guías claras y soporte postventa cuando más lo necesitas.
                 </p>
                 <div className="hero-buttons">
                   <Button as={Link} to="/productos" variant="primary" size="lg" className="me-3">
@@ -89,7 +95,7 @@ const Nosotros = () => {
             <Col lg={6}>
               <div className="hero-image">
                 <div className="hero-placeholder">
-                  <i className="bi bi-people display-1"></i>
+                  <i className="bi bi-people display-3"></i>
                 </div>
               </div>
             </Col>
@@ -195,11 +201,7 @@ const Nosotros = () => {
               <Col lg={3} md={6} key={index} className="mb-4">
                 <Card className="team-card h-100">
                   <div className="team-image-container">
-                    <img 
-                      src={member.image} 
-                      alt={member.name}
-                      className="team-image"
-                    />
+                    <div className="team-emoji">{member.emoji}</div>
                   </div>
                   <Card.Body className="text-center">
                     <h5 className="team-name">{member.name}</h5>
@@ -213,29 +215,6 @@ const Nosotros = () => {
         </Container>
       </section>
 
-      {/* CTA Section */}
-      <section className="cta-section py-5">
-        <Container>
-          <Row>
-            <Col lg={12}>
-              <div className="cta-content text-center">
-                <h2 className="cta-title">¿Listo para unirte a ElectroVerse?</h2>
-                <p className="cta-subtitle">
-                  Descubre nuestra amplia gama de productos y experimenta la diferencia
-                </p>
-                <div className="cta-buttons">
-                  <Button as={Link} to="/productos" variant="primary" size="lg" className="me-3">
-                    Explorar Productos
-                  </Button>
-                  <Button as={Link} to="/contacto" variant="outline-primary" size="lg">
-                    Contactar
-                  </Button>
-                </div>
-              </div>
-            </Col>
-          </Row>
-        </Container>
-      </section>
     </div>
   );
 };

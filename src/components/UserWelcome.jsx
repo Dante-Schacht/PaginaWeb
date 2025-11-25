@@ -8,22 +8,17 @@ const UserWelcome = () => {
   const [isFading, setIsFading] = useState(false);
 
   useEffect(() => {
-    // Solo iniciar timers si es un login reciente
     if (!user || !justLoggedIn) return;
 
-    // Iniciar desvanecimiento después de 5 segundos
     const fadeTimer = setTimeout(() => {
       setIsFading(true);
-    }, 5000);
+    }, 2500);
 
-    // Ocultar completamente después del desvanecimiento y limpiar flag
     const hideTimer = setTimeout(() => {
       setIsVisible(false);
-      // Limpiar el flag para no volver a mostrar en visitas futuras
       dismissWelcome();
-    }, 5500); // 500ms para la animación de desvanecimiento
+    }, 3000);
 
-    // Limpiar los timers si el componente se desmonta
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(hideTimer);
@@ -34,11 +29,28 @@ const UserWelcome = () => {
 
   return (
     <Alert 
-      variant="success" 
+      variant="light"
       className={`user-welcome ${isFading ? 'fade-out' : ''}`}
+      style={{
+        position: 'fixed',
+        top: 20,
+        right: 20,
+        zIndex: 1050,
+        background: '#fff',
+        color: '#333',
+        border: '1px solid #eee',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+        borderRadius: '10px',
+        width: 320,
+        maxWidth: '90vw',
+        padding: '12px 16px',
+        margin: 0,
+        opacity: isFading ? 0 : 1,
+        transition: 'opacity 300ms ease'
+      }}
     >
       <div className="d-flex align-items-center">
-        <i className="bi bi-check-circle-fill me-2"></i>
+        <i className="bi bi-check-circle-fill me-2" style={{ color: '#28a745' }}></i>
         <div>
           <strong>¡Bienvenido, {user.name}!</strong>
           <br />

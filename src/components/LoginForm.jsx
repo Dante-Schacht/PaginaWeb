@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Button, Alert, Spinner } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import '../styles/components/Auth.css';
 
@@ -12,6 +12,8 @@ const LoginForm = () => {
   const [errors, setErrors] = useState({});
   
   const { login, loading, error } = useApp();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -56,10 +58,9 @@ const LoginForm = () => {
     }
     
     const result = await login(formData.email, formData.password);
-    
     if (result.success) {
-      // Redirigir o mostrar mensaje de éxito
-      window.location.href = '/';
+      const redirectTo = location.state?.redirectTo || '/';
+      navigate(redirectTo, { replace: true });
     }
   };
 

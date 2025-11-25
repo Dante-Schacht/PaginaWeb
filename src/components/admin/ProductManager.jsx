@@ -6,7 +6,7 @@ import { uploadImages } from '../../lib/xanoEndpoints';
 import { resolveImageUrl, PLACEHOLDER_IMAGE, isUnwantedImage } from '../../lib/resolveImage';
 
 const ProductManager = () => {
-  const { products, setProducts, productsLoaded } = useApp();
+  const { products, setProducts, productsLoaded, categories } = useApp();
   const xano = useXano();
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -28,6 +28,24 @@ const ProductManager = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+
+  const normalizeCategoryName = (name) => {
+    const map = {
+      'Mouses': 'Mouse',
+      'Teclados': 'Teclado',
+      'Micrófonos': 'Micrófono',
+      'Monitores': 'Monitor',
+      'Parlantes': 'Parlante',
+      'Televisores': 'Televisor',
+      'Teléfonos': 'Teléfono',
+      'Audífonos': 'Audífono',
+      'Smartwatches': 'Smartwatch'
+    };
+    if (!name) return '';
+    return map[name] || name;
+  };
+
+  const categoryOptions = Array.isArray(categories) ? categories.map(c => c.name) : [];
 
   useEffect(() => {
     // Solo cargar si no hay productos cargados
@@ -200,7 +218,7 @@ const ProductManager = () => {
         price: formData.price,
         stock: formData.stock,
         brand: formData.brand,
-        category: formData.category,
+        category: normalizeCategoryName(formData.category),
         ...(selectedFiles.length > 0 && { images: imagesPayload }),
         active: true
       };
@@ -255,7 +273,7 @@ const ProductManager = () => {
       description: product.description || '',
       price: product.price || '',
       originalPrice: product.originalPrice || '',
-      category: product.category || '',
+      category: normalizeCategoryName(product.category || ''),
       brand: product.brand || '',
       image: product.image || '',
       stock: product.stock || '',
@@ -566,15 +584,9 @@ const ProductManager = () => {
                     required
                   >
                     <option value="">Seleccionar categoría</option>
-                    <option value="Mouses">Mouses</option>
-                    <option value="Teclados">Teclados</option>
-                    <option value="Micrófonos">Micrófonos</option>
-                    <option value="Monitores">Monitores</option>
-                    <option value="Parlantes">Parlantes</option>
-                    <option value="Televisores">Televisores</option>
-                    <option value="Teléfonos">Teléfonos</option>
-                    <option value="Audífonos">Audífonos</option>
-                    <option value="Smartwatches">Smartwatches</option>
+                    {categoryOptions.map((name) => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
                   </Form.Select>
                 </Form.Group>
               </Col>

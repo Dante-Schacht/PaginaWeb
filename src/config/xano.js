@@ -202,20 +202,61 @@ class XanoAPI {
       `${this.config.ENDPOINTS.PRODUCTS}?${queryString}` : 
       this.config.ENDPOINTS.PRODUCTS;
     try {
-      return await this.request(primary, options);
+      const data = await this.request(primary, options);
+      try {
+        localStorage.setItem('electroverse-products-cache', JSON.stringify({ ts: Date.now(), data }));
+      } catch {}
+      return data;
     } catch (error) {
+      console.warn('getProducts: error en endpoint principal:', error.message);
+      // Intentar leer de cache local ante fallo de red
+      try {
+        const cached = JSON.parse(localStorage.getItem('electroverse-products-cache') || '{}');
+        if (cached && Array.isArray(cached.data) && cached.data.length) {
+          console.warn('getProducts: usando cache local por fallo de red');
+          return cached.data;
+        }
+      } catch {}
       console.warn('getProducts: fallback a /product por error:', error.message);
       const fallback = queryString ? 
         `${this.config.ENDPOINTS.PRODUCTS_FALLBACK}?${queryString}` : 
         this.config.ENDPOINTS.PRODUCTS_FALLBACK;
-      return this.request(fallback, options);
+      const data = await this.request(fallback, options);
+      try {
+        localStorage.setItem('electroverse-products-cache', JSON.stringify({ ts: Date.now(), data }));
+      } catch {}
+      return data;
     }
   }
 
   async getProductById(id, options = {}) {
     try {
-      return await this.request(this.config.ENDPOINTS.PRODUCT_BY_ID(id), options);
+      const data = await this.request(this.config.ENDPOINTS.PRODUCT_BY_ID(id), options);
+      // Actualizar cache si existe
+      try {
+        const cached = JSON.parse(localStorage.getItem('electroverse-products-cache') || '{}');
+        if (cached && Array.isArray(cached.data)) {
+          const idx = cached.data.findIndex((p) => p && (p.id === id || p.product_id === id));
+          if (idx >= 0) {
+            cached.data[idx] = data;
+            localStorage.setItem('electroverse-products-cache', JSON.stringify(cached));
+          }
+        }
+      } catch {}
+      return data;
     } catch (error) {
+      console.warn('getProductById: error en endpoint principal:', error.message);
+      // Intentar resolver desde cache local
+      try {
+        const cached = JSON.parse(localStorage.getItem('electroverse-products-cache') || '{}');
+        if (cached && Array.isArray(cached.data)) {
+          const found = cached.data.find((p) => p && (p.id === id || p.product_id === id));
+          if (found) {
+            console.warn('getProductById: usando cache local por fallo de red');
+            return found;
+          }
+        }
+      } catch {}
       console.warn('getProductById: fallback a /product/:id por error:', error.message);
       return this.request(this.config.ENDPOINTS.PRODUCT_FALLBACK_BY_ID(id), options);
     }

@@ -280,3 +280,40 @@ a:hover {
     display: none !important;
   }
 }
+
+/* Product thumbnails */
+.thumb-48 {
+  width: 56px;
+  height: 56px;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.thumb-img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+}
+
+.thumb-row {
+  display: flex;
+  gap: 8px;
+}
+
+.terms-page .card-body {
+  font-size: 1.1rem;
+}
+
+.privacy-page .card-body {
+  font-size: 1.1rem;
+}

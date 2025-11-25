@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
 
 // Estado inicial
@@ -120,6 +121,9 @@ const AppContext = createContext();
 // Provider component
 export const AppProvider = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const restrictedPaths = useMemo(() => ['/admin', '/profile', '/orders'], []);
 
   // Funciones para manejar el carrito (usando useCallback)
   const addToCart = useCallback((product) => {
@@ -217,8 +221,12 @@ export const AppProvider = ({ children }) => {
     } finally {
       dispatch({ type: ACTIONS.LOGOUT });
       dispatch({ type: ACTIONS.SET_JUST_LOGGED_IN, payload: false });
+      const current = location.pathname;
+      if (restrictedPaths.some((p) => current.startsWith(p))) {
+        navigate('/', { replace: true });
+      }
     }
-  }, []);
+  }, [navigate, location.pathname, restrictedPaths]);
 
   // Función para descartar el aviso de bienvenida
   const dismissWelcome = useCallback(() => {

@@ -1,32 +1,17 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, Badge, Button, Alert } from 'react-bootstrap';
 import '../styles/components/ProfileOrders.css';
 
 const ProfileOrders = () => {
-  // Datos de ejemplo - en una aplicación real vendrían de la API
-  const orders = [
-    {
-      id: 'ORD-001',
-      date: '2024-01-15',
-      status: 'completed',
-      total: 299990,
-      items: 2
-    },
-    {
-      id: 'ORD-002',
-      date: '2024-01-20',
-      status: 'shipped',
-      total: 159990,
-      items: 1
-    },
-    {
-      id: 'ORD-003',
-      date: '2024-01-25',
-      status: 'pending',
-      total: 89990,
-      items: 1
+  const orders = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('electroverse-orders');
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
     }
-  ];
+  }, []);
 
   const getStatusBadge = (status) => {
     const statusMap = {
@@ -98,7 +83,7 @@ const ProfileOrders = () => {
                   <div className="order-details">
                     <div className="order-items">
                       <i className="bi bi-box me-1"></i>
-                      {order.items} {order.items === 1 ? 'producto' : 'productos'}
+                      {(Array.isArray(order.items) ? order.items.length : order.items)} {(Array.isArray(order.items) ? order.items.length : order.items) === 1 ? 'producto' : 'productos'}
                     </div>
                     <div className="order-total">
                       <strong>{formatPrice(order.total)}</strong>

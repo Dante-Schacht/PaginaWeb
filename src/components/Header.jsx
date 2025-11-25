@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Navbar, Nav, Container, Badge, Offcanvas, Dropdown, Button } from 'react-bootstrap';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import Logo from './Logo';
 import '../styles/components/Header.css';
@@ -22,6 +22,12 @@ const Header = () => {
   const isActive = (path) => {
     return location.pathname === path;
   };
+
+  React.useEffect(() => {
+    const handler = () => setShow(true);
+    window.addEventListener('open-cart', handler);
+    return () => window.removeEventListener('open-cart', handler);
+  }, []);
 
   return (
     <>
@@ -134,17 +140,18 @@ const Header = () => {
         <Offcanvas.Header closeButton>
           <Offcanvas.Title>Mi Carrito</Offcanvas.Title>
         </Offcanvas.Header>
-        <Offcanvas.Body>
-          <CartContent />
-        </Offcanvas.Body>
+          <Offcanvas.Body>
+          <CartContent onCheckout={() => setShow(false)} />
+          </Offcanvas.Body>
       </Offcanvas>
     </>
   );
 };
 
 // Componente para el contenido del carrito
-const CartContent = () => {
-  const { cart, removeFromCart, updateCartQuantity, cartTotal } = useApp();
+const CartContent = ({ onCheckout }) => {
+  const { cart, removeFromCart, updateCartQuantity, cartTotal, user } = useApp();
+  const navigate = useNavigate();
 
   if (cart.length === 0) {
     return (
@@ -160,27 +167,41 @@ const CartContent = () => {
       {cart.map(item => (
         <div key={item.id} className="cart-item d-flex align-items-center mb-3">
           <div className="cart-item-image me-3">
-            {isUnwantedImage(item.image || item?.additionalImages?.[0]) ? (
-              <div className="d-flex align-items-center justify-content-center img-thumbnail" style={{ width: '60px', height: '60px', background: '#fff' }}>
-                <i className="bi bi-image text-muted"></i>
-              </div>
-            ) : (
-              <img 
-                src={resolveImageUrl(item.image || item?.additionalImages?.[0])} 
-                alt={item.name}
-                className="img-thumbnail"
-                loading="lazy"
-                style={{ width: '60px', height: '60px', objectFit: 'contain', objectPosition: 'center', background: '#fff' }}
-                onError={(e) => {
-                  console.error('Cart: error cargando imagen', {
-                    id: item?.id,
-                    name: item?.name,
-                    src: e.currentTarget?.src
-                  });
-                  e.currentTarget.src = PLACEHOLDER_IMAGE;
-                }}
-              />
-            )}
+            {(() => {
+              const candidate = item.image 
+                || (Array.isArray(item.images) ? item.images[0] : null)
+                || (Array.isArray(item.additionalImages) ? item.additionalImages[0] : null)
+                || item.thumbnail 
+                || item.image_url 
+                || item.photo 
+                || item.foto 
+                || item.imagen;
+              if (isUnwantedImage(candidate)) {
+                return (
+                  <div className="d-flex align-items-center justify-content-center img-thumbnail" style={{ width: '60px', height: '60px', background: '#fff' }}>
+                    <i className="bi bi-image text-muted"></i>
+                  </div>
+                );
+              }
+              const src = resolveImageUrl(candidate);
+              return (
+                <img 
+                  src={src} 
+                  alt={item.name}
+                  className="img-thumbnail"
+                  loading="lazy"
+                  style={{ width: '60px', height: '60px', objectFit: 'contain', objectPosition: 'center', background: '#fff' }}
+                  onError={(e) => {
+                    console.error('Cart: error cargando imagen', {
+                      id: item?.id,
+                      name: item?.name,
+                      src: e.currentTarget?.src
+                    });
+                    e.currentTarget.src = PLACEHOLDER_IMAGE;
+                  }}
+                />
+              );
+            })()}
           </div>
           <div className="cart-item-details flex-grow-1">
             <h6 className="mb-1">{item.name}</h6>
@@ -211,7 +232,20 @@ const CartContent = () => {
       ))}
       <div className="cart-total mt-3 d-flex justify-content-between align-items-center">
         <strong>Total: ${cartTotal}</strong>
-        <Button variant="primary">Proceder al Pago</Button>
+        <Button 
+          variant="primary" 
+          onClick={() => {
+            const target = '/checkout';
+            if (user) {
+              navigate(target);
+            } else {
+              navigate('/login', { state: { redirectTo: target } });
+            }
+            if (onCheckout) onCheckout();
+          }}
+        >
+          Proceder al Pago
+        </Button>
       </div>
     </div>
   );

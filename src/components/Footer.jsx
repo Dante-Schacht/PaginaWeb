@@ -86,7 +86,7 @@ const Footer = () => {
           </Col>
           <Col md={6} className="text-md-end">
             <div className="footer-legal">
-              <Link to="/politica-privacidad" className="legal-link">
+              <Link to="/privacidad" className="legal-link">
                 Política de Privacidad
               </Link>
               <Link to="/terminos-condiciones" className="legal-link">
