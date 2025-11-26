@@ -126,14 +126,6 @@ const Home = () => {
                   Descubre la mejor selección de productos electrónicos para gamers, 
                   profesionales y entusiastas de la tecnología.
                 </p>
-                <div className="hero-buttons">
-                  <Button as={Link} to="/productos" variant="primary" size="lg" className="me-3">
-                    Ver Productos
-                  </Button>
-                  <Button as={Link} to="/nosotros" variant="outline-light" size="lg">
-                    Conoce Más
-                  </Button>
-                </div>
               </div>
             </Col>
             <Col lg={6}>

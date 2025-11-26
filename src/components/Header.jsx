@@ -19,6 +19,11 @@ const Header = () => {
   console.log('🔍 Header - isAdmin():', isAdmin());
   console.log('🔍 Header - user?.role:', user?.role);
 
+  React.useEffect(() => {
+    setNavExpanded(false);
+    setShow(false);
+  }, [location.pathname]);
+
   const handleClose = () => setShow(false);
   const handleShow = () => { setNavExpanded(false); setShow(true); };
 
@@ -105,7 +110,7 @@ const Header = () => {
               
               {/* Autenticación */}
               {user ? (
-                <Dropdown align="end">
+                <Dropdown align="end" key={location.pathname}>
                   <Dropdown.Toggle as={Nav.Link} className="user-dropdown">
                     <i className="bi bi-person-circle me-1"></i>
                     {user.name}
