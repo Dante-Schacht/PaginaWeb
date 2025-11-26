@@ -172,7 +172,7 @@ export const mapProduct = (xanoProduct) => {
     discount: additionalData.discount,
     rating: additionalData.rating,
     reviews: additionalData.reviews,
-    active: xanoProduct.active !== false,
+    active: (xanoProduct.active ?? xanoProduct.is_active) !== false,
     createdAt: xanoProduct.created_at ? new Date(xanoProduct.created_at) : new Date(),
     // Nuevos campos para detalles
     features: additionalData.features,

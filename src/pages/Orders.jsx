@@ -120,10 +120,12 @@ const Orders = () => {
                         <div className="text-muted small">{o.method === 'tarjeta' ? 'crédito/débito' : o.method}</div>
                       </div>
                     </div>
-                    <div className="d-flex align-items-center">
-                      <div className="me-3"><strong>{fmtPrice(o.total)}</strong></div>
-                      <Button as={Link} to={`/orders/${o.id}`} variant="primary" className="me-2">Ver compra</Button>
-                      <Button variant="outline-primary" onClick={() => buyAgain(o)}>Volver a comprar</Button>
+                    <div className="d-flex flex-column flex-sm-row align-items-sm-center gap-2">
+                      <div className="order-total-label text-end text-sm-start"><strong>{fmtPrice(o.total)}</strong></div>
+                      <div className="d-flex flex-column flex-sm-row gap-2 w-100 w-sm-auto">
+                        <Button as={Link} to={`/orders/${o.id}`} variant="primary" className="w-100 w-sm-auto">Ver compra</Button>
+                        <Button variant="outline-primary" className="w-100 w-sm-auto" onClick={() => buyAgain(o)}>Volver a comprar</Button>
+                      </div>
                     </div>
                   </div>
                 ))}

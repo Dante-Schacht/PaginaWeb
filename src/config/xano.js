@@ -198,17 +198,20 @@ class XanoAPI {
   // Métodos para productos
   async getProducts(params = {}, options = {}) {
     const queryString = new URLSearchParams(params).toString();
-    const primary = queryString ? 
+    const singular = queryString ? 
+      `${this.config.ENDPOINTS.PRODUCTS_FALLBACK}?${queryString}` : 
+      this.config.ENDPOINTS.PRODUCTS_FALLBACK;
+    const plural = queryString ? 
       `${this.config.ENDPOINTS.PRODUCTS}?${queryString}` : 
       this.config.ENDPOINTS.PRODUCTS;
     try {
-      const data = await this.request(primary, options);
+      const data = await this.request(singular, options);
       try {
         localStorage.setItem('electroverse-products-cache', JSON.stringify({ ts: Date.now(), data }));
       } catch {}
       return data;
     } catch (error) {
-      console.warn('getProducts: error en endpoint principal:', error.message);
+      console.warn('getProducts: error en endpoint singular:', error.message);
       // Intentar leer de cache local ante fallo de red
       try {
         const cached = JSON.parse(localStorage.getItem('electroverse-products-cache') || '{}');
@@ -217,11 +220,8 @@ class XanoAPI {
           return cached.data;
         }
       } catch {}
-      console.warn('getProducts: fallback a /product por error:', error.message);
-      const fallback = queryString ? 
-        `${this.config.ENDPOINTS.PRODUCTS_FALLBACK}?${queryString}` : 
-        this.config.ENDPOINTS.PRODUCTS_FALLBACK;
-      const data = await this.request(fallback, options);
+      console.warn('getProducts: fallback a endpoint plural por error:', error.message);
+      const data = await this.request(plural, options);
       try {
         localStorage.setItem('electroverse-products-cache', JSON.stringify({ ts: Date.now(), data }));
       } catch {}
@@ -333,11 +333,9 @@ class XanoAPI {
         continue;
       }
       if (key === "active") {
-        if (typeof val === "string") {
-          out.active = val.toLowerCase() === "true";
-        } else {
-          out.active = Boolean(val);
-        }
+        const boolVal = (typeof val === "string") ? val.toLowerCase() === "true" : Boolean(val);
+        out.active = boolVal;
+        out.is_active = boolVal;
         continue;
       }
       // strings: evita vacíos
@@ -411,11 +409,9 @@ class XanoAPI {
         continue;
       }
       if (key === "active") {
-        if (typeof val === "string") {
-          out.active = val.toLowerCase() === "true";
-        } else {
-          out.active = Boolean(val);
-        }
+        const boolVal = (typeof val === "string") ? val.toLowerCase() === "true" : Boolean(val);
+        out.active = boolVal;
+        out.is_active = boolVal;
         continue;
       }
       if (key === "images") {

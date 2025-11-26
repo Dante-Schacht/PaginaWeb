@@ -304,8 +304,10 @@ const ProductManager = () => {
   const handleToggleActive = async (product) => {
     try {
       setLoading(true);
-      await xano.updateProduct(product.id, { active: !product.active });
+      const next = !product.active;
+      await xano.updateProduct(product.id, { active: next, is_active: next });
       setSuccess(`Producto ${product.active ? 'desactivado' : 'activado'} correctamente`);
+      setProducts(prev => Array.isArray(prev) ? prev.map(p => (p.id === product.id ? { ...p, active: next } : p)) : prev);
       await loadProducts();
     } catch (error) {
       setError('Error al actualizar estado: ' + error.message);

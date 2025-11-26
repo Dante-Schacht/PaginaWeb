@@ -9,6 +9,8 @@ import { formatCLP } from '../lib/currency'
 
 const Header = () => {
   const [show, setShow] = useState(false);
+  const [navExpanded, setNavExpanded] = useState(false);
+  const nav = useNavigate();
   const { cartItemsCount, user, logout, isAdmin } = useApp();
   const location = useLocation();
   
@@ -18,7 +20,7 @@ const Header = () => {
   console.log('🔍 Header - user?.role:', user?.role);
 
   const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
+  const handleShow = () => { setNavExpanded(false); setShow(true); };
 
   const isActive = (path) => {
     return location.pathname === path;
@@ -32,7 +34,7 @@ const Header = () => {
 
   return (
     <>
-      <Navbar expand="lg" className="custom-navbar" variant="dark">
+      <Navbar expand="lg" className="custom-navbar" variant="dark" expanded={navExpanded} onToggle={(v) => setNavExpanded(v)}>
         <Container>
           <Navbar.Brand className="brand-logo">
             <Logo size="medium" className="logo-white" />
@@ -46,6 +48,7 @@ const Header = () => {
                 as={Link} 
                 to="/" 
                 className={isActive('/') ? 'active' : ''}
+                onClick={() => setNavExpanded(false)}
               >
                 Inicio
               </Nav.Link>
@@ -53,6 +56,7 @@ const Header = () => {
                 as={Link} 
                 to="/productos" 
                 className={isActive('/productos') ? 'active' : ''}
+                onClick={() => setNavExpanded(false)}
               >
                 Productos
               </Nav.Link>
@@ -60,6 +64,7 @@ const Header = () => {
                 as={Link} 
                 to="/blogs" 
                 className={isActive('/blogs') ? 'active' : ''}
+                onClick={() => setNavExpanded(false)}
               >
                 Blogs
               </Nav.Link>
@@ -67,6 +72,7 @@ const Header = () => {
                 as={Link} 
                 to="/nosotros" 
                 className={isActive('/nosotros') ? 'active' : ''}
+                onClick={() => setNavExpanded(false)}
               >
                 Nosotros
               </Nav.Link>
@@ -74,23 +80,27 @@ const Header = () => {
                 as={Link} 
                 to="/contacto" 
                 className={isActive('/contacto') ? 'active' : ''}
+                onClick={() => setNavExpanded(false)}
               >
                 Contacto
               </Nav.Link>
             </Nav>
-            
+
             <Nav>
               {/* Carrito */}
               <Nav.Link 
                 onClick={handleShow}
                 className="cart-link"
+                onKeyDown={(e) => { if (e.key === 'Enter') handleShow(); }}
               >
-                <i className="bi bi-cart3"></i>
-                {cartItemsCount > 0 && (
-                  <Badge bg="danger" className="cart-badge">
-                    {cartItemsCount}
-                  </Badge>
-                )}
+                <span className="cart-icon">
+                  <i className="bi bi-cart3"></i>
+                  {cartItemsCount > 0 && (
+                    <Badge bg="danger" className="cart-badge">
+                      {cartItemsCount}
+                    </Badge>
+                  )}
+                </span>
               </Nav.Link>
               
               {/* Autenticación */}
@@ -101,32 +111,32 @@ const Header = () => {
                     {user.name}
                   </Dropdown.Toggle>
                   <Dropdown.Menu>
-                    <Dropdown.Item as={Link} to="/profile">
+                    <Dropdown.Item as={Link} to="/profile" onClick={() => { setNavExpanded(false); setShow(false); }}>
                       <i className="bi bi-person me-2"></i>
                       Mi Perfil
                     </Dropdown.Item>
-                    <Dropdown.Item as={Link} to="/orders">
+                    <Dropdown.Item as={Link} to="/orders" onClick={() => { setNavExpanded(false); setShow(false); }}>
                       <i className="bi bi-bag me-2"></i>
                       Mis Pedidos
                     </Dropdown.Item>
                     {isAdmin() && (
                       <>
                         <Dropdown.Divider />
-                        <Dropdown.Item as={Link} to="/admin">
+                        <Dropdown.Item as={Link} to="/admin" onClick={() => { setNavExpanded(false); setShow(false); }}>
                           <i className="bi bi-gear me-2"></i>
                           Panel de Administración
                         </Dropdown.Item>
                       </>
                     )}
                     <Dropdown.Divider />
-                    <Dropdown.Item onClick={logout}>
+                    <Dropdown.Item onClick={() => { setNavExpanded(false); setShow(false); logout(); nav('/'); }}>
                       <i className="bi bi-box-arrow-right me-2"></i>
                       Cerrar Sesión
                     </Dropdown.Item>
                   </Dropdown.Menu>
                 </Dropdown>
               ) : (
-                <Nav.Link as={Link} to="/login" className="auth-link">
+                <Nav.Link as={Link} to="/login" className="auth-link" onClick={() => setNavExpanded(false)}>
                   <i className="bi bi-person me-1"></i>
                   Iniciar Sesión
                 </Nav.Link>
