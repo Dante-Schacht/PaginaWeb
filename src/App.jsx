@@ -4,8 +4,7 @@ import { AppProvider } from './context/AppContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
-import BackToTop from './components/BackToTop';
-import CartQuickButton from './components/CartQuickButton';
+import FloatingButtons from './components/FloatingButtons';
 import ErrorBoundary from './components/ErrorBoundary';
 import Home from './pages/Home';
 import Productos from './pages/Productos';
@@ -64,8 +63,7 @@ function App() {
         <ErrorBoundary>
           <Footer />
         </ErrorBoundary>
-        <BackToTop />
-        <CartQuickButton />
+        <FloatingButtons />
       </div>
     </AppProvider>
   );
