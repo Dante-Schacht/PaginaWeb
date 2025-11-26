@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext'
 import xanoAPI from '../config/xano'
 import { useNavigate } from 'react-router-dom'
 import { resolveImageUrl, PLACEHOLDER_IMAGE } from '../lib/resolveImage'
+import { formatCLP } from '../lib/currency'
 
 const Checkout = () => {
   const navigate = useNavigate()
@@ -193,13 +194,13 @@ const Checkout = () => {
                       <strong>{item.name}</strong>
                       <div className="text-muted small">x{item.quantity}</div>
                     </div>
-                    <div>${item.price * item.quantity}</div>
+                    <div>{formatCLP(item.price * item.quantity)}</div>
                   </div>
                 ))}
                 <hr />
                 <div className="d-flex justify-content-between">
                   <strong>Total</strong>
-                  <strong>${displayTotal}</strong>
+                  <strong>{formatCLP(displayTotal)}</strong>
                 </div>
               </Card.Body>
             </Card>

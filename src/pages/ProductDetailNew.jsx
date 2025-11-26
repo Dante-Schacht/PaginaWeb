@@ -86,10 +86,14 @@ const ProductDetailNew = () => {
 
             <div className="price-section mb-4">
               <div className="d-flex align-items-center gap-3">
-                <span className="h2 text-primary mb-0">${product.price}</span>
+                <span className="h2 text-primary mb-0">{
+                  new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(product.price)
+                }</span>
                 {product.originalPrice && product.originalPrice > product.price && (
                   <span className="text-muted text-decoration-line-through">
-                    ${product.originalPrice}
+                    {
+                      new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(product.originalPrice)
+                    }
                   </span>
                 )}
                 {product.discount && (

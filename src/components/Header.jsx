@@ -5,6 +5,7 @@ import { useApp } from '../context/AppContext';
 import Logo from './Logo';
 import '../styles/components/Header.css';
 import { resolveImageUrl, isUnwantedImage, PLACEHOLDER_IMAGE } from '../lib/resolveImage'
+import { formatCLP } from '../lib/currency'
 
 const Header = () => {
   const [show, setShow] = useState(false);
@@ -205,7 +206,7 @@ const CartContent = ({ onCheckout }) => {
           </div>
           <div className="cart-item-details flex-grow-1">
             <h6 className="mb-1">{item.name}</h6>
-            <p className="text-muted mb-1">${item.price}</p>
+            <p className="text-muted mb-1">{formatCLP(item.price)}</p>
             <div className="d-flex align-items-center">
               <button 
                 className="btn btn-sm btn-outline-secondary"
@@ -231,7 +232,7 @@ const CartContent = ({ onCheckout }) => {
         </div>
       ))}
       <div className="cart-total mt-3 d-flex justify-content-between align-items-center">
-        <strong>Total: ${cartTotal}</strong>
+        <strong>Total: {formatCLP(cartTotal)}</strong>
         <Button 
           variant="primary" 
           onClick={() => {

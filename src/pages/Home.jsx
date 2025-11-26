@@ -219,7 +219,7 @@ const Home = () => {
               <div className="feature-card text-center">
                 <i className="bi bi-truck feature-icon"></i>
                 <h5>Envío Gratis</h5>
-                <p>En compras superiores a $100</p>
+                <p>En compras superiores a $100.000</p>
               </div>
             </Col>
             <Col lg={4} className="mb-4">

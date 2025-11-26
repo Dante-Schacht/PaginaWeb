@@ -67,10 +67,14 @@ const ProductCardNew = ({ product, onClick }) => {
         <div className="mt-auto">
           <div className="d-flex justify-content-between align-items-center">
             <div>
-              <span className="h5 text-primary">${product.price}</span>
+              <span className="h5 text-primary">{
+                new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(product.price)
+              }</span>
               {product.originalPrice && product.originalPrice > product.price && (
                 <span className="text-muted text-decoration-line-through ms-2">
-                  ${product.originalPrice}
+                  {
+                    new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(product.originalPrice)
+                  }
                 </span>
               )}
             </div>
